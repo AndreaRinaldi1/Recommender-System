@@ -19,22 +19,63 @@ def fillMatrix(height,width,val):
 		X[row,col]=pred[i]
 	return X
 
-def npca(Y):
+def splitSet(validationPercentage, height,width, inp="data_train.csv"):
+
+	df = pd.read_csv(inp)
+	ids=np.array(df['Id'])
+	pred=np.array(df['Prediction'])
+	nrRatings = np.shape(ids)[0]
+	nrTrain = (int)(nrRatings*(1-validationPercentage))
+	nrTest = nrRatings-nrTrain
+	indicesTrain = np.random.choice(nrRatings,nrTrain,replace=False)
+	Xtrain = np.zeros((height,width))
+	Xtest = np.zeros((height,width))
+
+	for i in indicesTrain:
+		row,col=parseId(ids[i])
+		Xtrain[row,col] = pred[i]
+		
+	indicesTest = np.setdiff1d(np.arange(nrRatings), indicesTrain)
+	for i in indicesTest:
+		row,col=parseId(ids[i])
+		Xtest[row,col] = pred[i]
+
+	return Xtrain,Xtest,nrTrain, nrTest
+
+def splitNpy(X, height, width, splitPercentage):
+	nonzeros = np.nonzero(X)
+	ids = np.empty(np.shape(nonzeros[0])[0], dtype="U12") 
+	predictions = np.empty(np.shape(nonzeros[0])[0], dtype="i")
+	for i in range(np.shape(nonzeros[0])[0]):
+		if(i%100000 == 0):
+			print(i)
+		h = nonzeros[0][i]
+		w = nonzeros[1][i]
+		idString = "r"+str(h+1)+"_c"+str(w+1)
+		pred = X[h,w]
+		ids[i] = idString
+		predictions[i] = pred
+	
+	df = pd.DataFrame({'Id':ids,'Prediction':predictions})
+	df.to_csv("temporary.csv",index=False)	
+	return splitSet(splitPercentage,height,width, inp="temporary.csv")
+
+def npca(Y, Yval, nrTrain, nrTest):
 	N = np.shape(Y)[1] #The width (items)
 	M = np.shape(Y)[0] #The height (users)
 	K = np.identity(N)
-	ratingsCount = 1176952.0;
+	ratingsCount = nrTrain*1.0
 	average = np.sum(Y)/ratingsCount
 	ratingSquaredSum = squaredDiffAvg(Y,average)
 	K = K*(ratingSquaredSum/ratingsCount*1.0)
 	mu = np.full(N,average)
-	
-	iterMax = 50; #used for the global convergence. Could be replaced by a while loop and an error measure on a validation set
+	previousLoss = 10	
+
+	iterMax = 50; 
 	for iter in range(iterMax):
 		print(iter)
 		B = np.zeros((N,N))
 		b = np.zeros(N)
-		start = time.time()
 		for i in range(M):
 			Oi = np.nonzero(Y[i,:])[0]
 			G = np.linalg.inv(K[np.ix_(Oi,Oi)])
@@ -42,12 +83,16 @@ def npca(Y):
 			b[Oi] = b[Oi]+np.hstack(t)
 			B[np.ix_(Oi,Oi)] = B[np.ix_(Oi,Oi)] - G + np.outer(t,t)
 			if(i%1000==0):
-				print(time.time()-start)
-				start = time.time()
+				print(i)
 
 		mu = mu + (1.0/M)*b
 		K = K + (1.0/M)*np.matmul(np.matmul(K,B),K)
-		
+		soFarMat = fillValidationMatrix(Y, Yval, K, mu)
+		loss = math.sqrt((((soFarMat-Yval)**2).sum())/nrTest)
+		print(loss)
+		if loss>previousLoss:
+			return K,mu
+		previousLoss = loss
 	return K,mu
 
 def squaredDiffAvg(Y,average):
@@ -57,6 +102,15 @@ def squaredDiffAvg(Y,average):
 		observed = np.nonzero(Y[i,:])[0]
 		squaredSum += np.sum(np.power(Y[i,observed]-average,2))
 	return squaredSum
+
+def fillValidationMatrix(Xtrain, Xval, K, mu):
+	nonzeros = np.nonzero(Xval)
+	Xpred = np.zeros((10000,1000))
+	for i in range(np.shape(nonzeros[0])[0]):
+		h = nonzeros[0][i]
+		w = nonzeros[1][i]
+		Xpred[h,w] = predict(h,w,Xtrain, K, mu)
+	return Xpred
 		
 def predict(i,j,Y,K,mu):
 	Oi = np.nonzero(Y[i,:])[0]
@@ -83,14 +137,22 @@ def writeToCSV(X,K,mu):
 			start = time.time();
 	df = pd.DataFrame({'Id':np.ndarray.flatten(ids),'Prediction':np.ndarray.flatten(predictions)})
 	df.to_csv("SubmissionNPCA.csv",index=False)
-	np.save("matrix", X)
+	#Predict the complete matrix for model combining
+	Xcomplete = np.zeros((10000,1000))
+	for i in range(10000):
+		for j in range(1000):
+			Xcomplete[i,j] = predict(i,j,X, K, mu)
+	np.save("FullMatrixNPCA.npy", Xcomplete) 
+	
+	
 
 height = 10000
 width = 1000
 
-X = fillMatrix(height,width,0)
-K, mu = npca(X)
-writeToCSV(X,K,mu)
+X = np.load("TrainSet.npy")
+Xtrain, Xval, nrTrain, nrVal = splitNpy(X, 10000,1000,0.05)
+K, mu = npca(Xtrain, Xval, nrTrain, nrVal)
+writeToCSV(Xtrain,K,mu)
 
 
 
