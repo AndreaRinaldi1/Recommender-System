@@ -1,9 +1,11 @@
 import numpy as np
 import pandas as pd
-from scipy.stats import wishart
-import math
 import time
+import datetime
 
+complete_trainset = "../data/data_train.csv"
+training_set = "../data/TrainSet.npy"
+sample_submission = "../data/sampleSubmission.csv"
 
 
 def parseId(stringId):
@@ -12,7 +14,7 @@ def parseId(stringId):
 
 def fillMatrix(height,width,val):
 	X = np.ones(shape=(height,width))*val
-	df = pd.read_csv("data_train.csv")
+	df = pd.read_csv(complete_trainset)
 	ids=np.array(df['Id'])
 	pred=np.array(df['Prediction'])
 	for i in range(np.shape(ids)[0]):
@@ -20,29 +22,32 @@ def fillMatrix(height,width,val):
 		X[row,col]=pred[i]
 	return X
 
+def initialization():
+    full_matrix = np.load(training_set)
+    rows, cols = np.where(full_matrix != 0)
+    Ind = np.zeros((rows.size, 2), dtype=np.int)
+    for i in range(rows.size):
+        Ind[i] = np.array([rows[i], cols[i]])
+    return full_matrix, Ind
 
-def predict(Xcompleted, i,j):
-	#Return the result here
-	return 1
 
-def writeToCSV(Xcompleted):
-	df = pd.read_csv("sampleSubmission.csv")
+def writeFileEnsemble(predictions):
+	df = pd.read_csv(sample_submission)
 	ids=np.array(df['Id'])
-	predictions=np.zeros(np.shape(ids)[0])
-	print("Number of predictions to make: " +str(np.shape(ids)[0]))
-	start = 0
-	j=0
-	for i in range(np.shape(ids)[0]):
-		row,col=parseId(ids[i])
-		predictions[i] = predict(Xcompleted,row,col)
-		if(i%10000 == 0):
-			if(i!=0):
-				print(str(j) +" , time "+str(time.time()-start))
-				j+=1
-			start = time.time();
-	df = pd.DataFrame({'Id':np.ndarray.flatten(ids),'Prediction':np.ndarray.flatten(predictions)})
-	df.to_csv("MySubmission.csv",index=False)	
+	df = pd.DataFrame({'Id': np.ndarray.flatten(ids), 'Prediction': np.ndarray.flatten(predictions)})
+	df.to_csv("EnsembleSubmission.csv", index=False)
 
+
+def writeFile(X):
+    df = pd.read_csv(sample_submission)
+    ids=np.array(df['Id'])
+    predictions=np.zeros(np.shape(ids)[0])
+    for i in range(np.shape(ids)[0]):
+        row,col=parseId(ids[i])
+        predictions[i] = X[row,col]
+    df = pd.DataFrame({'Id':np.ndarray.flatten(ids),'Prediction':np.ndarray.flatten(predictions)})
+    now = datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
+    df.to_csv("mySubmission"+now+".csv",index=False)
 
 #Example of use:
 #height = 10000

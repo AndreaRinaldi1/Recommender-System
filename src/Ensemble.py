@@ -5,32 +5,21 @@ from os.path import isfile, join
 from sklearn.model_selection import GridSearchCV
 from sklearn.linear_model import Ridge
 from sklearn.neural_network import MLPRegressor
-
-
-def parseId(stringId):
-	splits = stringId.split("_")
-	return int(splits[0][1:]) - 1, int(splits[1][1:]) - 1
-
-
-def writeFile(predictions):
-	df = pd.read_csv("sampleSubmission.csv")
-	ids=np.array(df['Id'])
-	df = pd.DataFrame({'Id': np.ndarray.flatten(ids), 'Prediction': np.ndarray.flatten(predictions)})
-	df.to_csv("EnsembleSubmission.csv", index=False)
+import IOUtil
 
 
 def getIdsToWrite():
-	df = pd.read_csv("sampleSubmission.csv")
+	df = pd.read_csv("../data/sampleSubmission.csv")
 	ids=np.array(df['Id'])
 	idsToWrite = np.zeros((len(ids), 2))
 	for i in range(np.shape(ids)[0]):
-		row,col=parseId(ids[i])
+		row,col=IOUtil.parseId(ids[i])
 		idsToWrite[i] = row, col
 	return idsToWrite.astype(int)
 
 
 def ensemble(known_ids, idsToWrite):
-	path = "results/"
+	path = "../results/"
 	files = [f for f in listdir(path) if isfile(join(path, f))]
 
 	nrFiles = 0
@@ -52,13 +41,14 @@ def ensemble(known_ids, idsToWrite):
 			pred_matrix = pred
 			models_weights = weight
 		else:
-			train_matrix = np.vstack((pred_matrix, train))
+			train_matrix = np.vstack((train_matrix, train))
 			pred_matrix = np.vstack((pred_matrix, pred))
 			models_weights = np.vstack((models_weights, weight))
 		nrFiles+=1
 
 	weights_sum = np.sum(models_weights, axis=0)
-
+	print(train_matrix)
+	print(pred_matrix)
 	return train_matrix.T, pred_matrix.T, weights_sum
 
 
@@ -90,7 +80,7 @@ def regression(train_matrix, pred_matrix, groundTruth, weights):
 	return final_prediction'''
 
 	mlp = MLPRegressor()
-	params = {"hidden_layer_sizes": [(50,), (100,), (150,)], "activation":["relu"], "solver":["adam"], "alpha": [0.001, 0.01, 0.1, 1], "learning_rate": ["invscaling"]}
+	params = {"hidden_layer_sizes": [(50,), (10,), (25,)], "activation":["relu"], "solver":["adam"], "alpha": [0.001, 0.01, 0.1, 1], "learning_rate": ["invscaling"]}
 	grid = GridSearchCV(estimator=mlp, param_grid=params, iid=False, verbose=3, n_jobs=-1, scoring="neg_mean_squared_error")
 	grid.fit(train_matrix, groundTruth)
 	final_prediction = grid.predict(pred_matrix)
@@ -100,15 +90,14 @@ def regression(train_matrix, pred_matrix, groundTruth, weights):
 
 
 def groundTruth():
-	file = "data_train.csv"
-	df = pd.read_csv(file)
-	ids = np.array(df['Id'])
-	pred = np.array(df['Prediction'])
-	Ids = np.zeros((len(ids), 2))
-	for i in range(np.shape(ids)[0]):
-		row, col = parseId(ids[i])
-		Ids[i] = row, col
-	return Ids.astype(int), pred
+	X = np.load("../data/ValidationSet.npy")
+	rows, cols = np.where(X != 0)
+	Ind = np.zeros((rows.size, 2), dtype=np.int)
+	pred = np.zeros(rows.size)
+	for i in range(rows.size):
+		Ind[i] = np.array([rows[i], cols[i]])
+		pred[i] = X[rows[i], cols[i]]
+	return Ind.astype(int), pred
 
 
 known_ids, groundT = groundTruth()
@@ -116,4 +105,4 @@ idsToWrite = getIdsToWrite()
 train_matrix, pred_matrix, weights = ensemble(known_ids, idsToWrite)
 final_prediction = regression(train_matrix, pred_matrix, groundT, weights)
 final_prediction = np.clip(final_prediction, 1, 5)
-writeFile(final_prediction)
+IOUtil.writeFileEnsemble(final_prediction)

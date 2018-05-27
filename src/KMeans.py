@@ -1,39 +1,9 @@
 import numpy as np
-import pandas as pd
 import matplotlib
 matplotlib.use('agg')
 import matplotlib.pyplot as plt
 import random
-import datetime
-import time
-from os import listdir
-from os.path import isfile, join
-
-
-def parseId(stringId):
-    splits = stringId.split("_")
-    return int(splits[0][1:])-1,int(splits[1][1:])-1
-
-
-def writeFile(X):
-    df = pd.read_csv("sampleSubmission.csv")
-    ids=np.array(df['Id'])
-    predictions=np.zeros(np.shape(ids)[0])
-    for i in range(np.shape(ids)[0]):
-        row,col=parseId(ids[i])
-        predictions[i] = X[row,col]
-    df = pd.DataFrame({'Id':np.ndarray.flatten(ids),'Prediction':np.ndarray.flatten(predictions)})
-    now = datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
-    df.to_csv("mySubmission"+now+".csv",index=False)
-
-
-def getMatrix():
-    X = np.load("TrainSet.npy")
-    rows, cols = np.where(X != 0)
-    Ind = np.zeros((rows.size, 2), dtype=np.int)
-    for i in range(rows.size):
-        Ind[i] = np.array([rows[i], cols[i]])
-    return Ind, X
+import IOUtil
 
 def compute_centroids(users_in_centroid):
 
@@ -147,7 +117,7 @@ def kmeans_algorithm(num_of_centroids, total_number_of_iterations, num_of_sample
 
 
 def train(list_of_centroids):
-    list_of_iter = [2, 25, 25, 25, 22, 20, 18, 16, 14, 12, 10]
+    list_of_iter = [25, 25, 25, 25, 22, 20, 18, 16, 14, 12, 10]
     num_of_samples = [300, 400, 500]
 
     errors = np.ones(len(list_of_centroids))*100000000000000
@@ -166,13 +136,13 @@ def train(list_of_centroids):
                 print("new best result:" + str(total_error))
                 best_centroids = centroids_tmp
                 best_users_to_centroids = users_to_centroids_tpm
-        np.save("centroids" + str(num_of_centroids), best_centroids)
+        #np.save("centroids" + str(num_of_centroids), best_centroids)
         for user in best_users_to_centroids:
             finalMatrix[user, :] += best_centroids[best_users_to_centroids[user]]
 
     finalMatrix = finalMatrix / len(list_of_centroids)
     np.save("KMeans", finalMatrix)
-    writeFile(finalMatrix)
+    #IOUtil.writeFile(finalMatrix)
     return errors
 
 
@@ -198,7 +168,7 @@ def main():
 
 num_of_users = 10000
 width = 1000
-Ind, X = getMatrix()
+X, Ind = IOUtil.initialization()
 Ind = Ind[Ind[:, 0].argsort()]
 
 if __name__ == '__main__':

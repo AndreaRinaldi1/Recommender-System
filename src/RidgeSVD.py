@@ -2,13 +2,14 @@ import numpy as np
 import pandas as pd
 import datetime
 import time
+import IOUtil
 
 
 def get_rating(user, movie, U, ZT, b, b_u, b_m_weighted):
     return b_u[user] + b_m_weighted[movie] + U[user, :].dot(ZT[:, movie])
 
 
-def getFullMatrix(A, Ind, U, ZT, b, b_u, b_m_weighted):
+def getFullMatrix(A, U, ZT, b, b_u, b_m_weighted):
     fullMatrix = np.zeros((A.shape[0], A.shape[1]))
     for i in range(A.shape[0]):
         for j in range(A.shape[1]):
@@ -16,38 +17,10 @@ def getFullMatrix(A, Ind, U, ZT, b, b_u, b_m_weighted):
     return fullMatrix
 
 
-def writeFile(X):
-    df = pd.read_csv("sampleSubmission.csv")
-    ids=np.array(df['Id'])
-    predictions=np.zeros(np.shape(ids)[0])
-    for i in range(np.shape(ids)[0]):
-        row,col=parseId(ids[i])
-        predictions[i] = X[row,col]
-    df = pd.DataFrame({'Id':np.ndarray.flatten(ids),'Prediction':np.ndarray.flatten(predictions)})
-    now = datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
-    df.to_csv("mySubmission"+now+".csv",index=False)
-
-
-def parseId(stringId):
-    splits = stringId.split("_")
-    return int(splits[0][1:])-1,int(splits[1][1:])-1
-
-
-def initialization():
-    A = np.load("TrainSet.npy")
-
-    rows, cols = np.where(A != 0)
-    Ind = np.zeros((rows.size, 2), dtype=np.int)
-    for i in range(rows.size):
-        Ind[i] = np.array([rows[i], cols[i]])
-    return A, Ind
-
-
 def RidgePostProcessing():
-    # Kernel Ridge regression (gaussian kernel)
-    A, Ind = initialization()
+    A, Ind = IOUtil.initialization()
 
-    final = np.load("results/RSVD.npy")
+    final = np.load("../results/RSVD.npy")
 
     for row, col in Ind:
         final[row, col] = A[row, col]
@@ -96,7 +69,7 @@ def RidgePostProcessing():
     print(postFinal)
     now = datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
     np.save("Ridge" + now + "", postFinal)
-    writeFile(postFinal)
+    #IOUtil.writeFile(postFinal)
 
 
 num_users = 10000

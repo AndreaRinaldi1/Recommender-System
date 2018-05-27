@@ -4,20 +4,7 @@ import datetime
 import time
 import random
 import math
-
-
-def parseId(stringId):
-    splits = stringId.split("_")
-    return int(splits[0][1:])-1,int(splits[1][1:])-1
-
-
-def initialization():
-    full_matrix = np.load("TrainSet.npy")
-    rows, cols = np.where(full_matrix != 0)
-    Ind = np.zeros((rows.size, 2), dtype=np.int)
-    for i in range(rows.size):
-        Ind[i] = np.array([rows[i], cols[i]])
-    return full_matrix, Ind
+import IOUtil
 
 
 def hide_values(Ind):
@@ -85,18 +72,6 @@ def fill_matrix():
                 training_matrix[i, j] = w_u[i] * b_m_weighted[j]
 
     return training_matrix
-
-
-def writeFile(X):
-    df = pd.read_csv("sampleSubmission.csv")
-    ids=np.array(df['Id'])
-    predictions=np.zeros(np.shape(ids)[0])
-    for i in range(np.shape(ids)[0]):
-        row,col=parseId(ids[i])
-        predictions[i] = X[row,col]
-    df = pd.DataFrame({'Id':np.ndarray.flatten(ids),'Prediction':np.ndarray.flatten(predictions)})
-    now = datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
-    df.to_csv("mySubmission"+now+".csv",index=False)
 
 
 def get_rating(user, movie):
@@ -174,13 +149,13 @@ unknown_value = 0
 
 lr = 0.005
 
-for reg in [0.02, 0.05, 0.1]:
-    for reg_b in [0.02, 0.05, 0.1]:
+for reg in [0.01, 0.02, 0.05]:
+    for reg_b in [0.02, 0.05, 0.1, 0.15]:
         for factor in [3, 6, 9, 12, 15]:
             for iteration in range(2):
                 print("RSVD_R" + str(reg) + "_RB" + str(reg_b) + "_F" + str(factor) + "_" + str(iteration))
 
-                full_matrix, Ind = initialization()
+                full_matrix, Ind = IOUtil.initialization()
                 training_matrix, remaining_values, hidden_values = create_training_set()
 
                 b_u = np.zeros(num_users)

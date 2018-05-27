@@ -5,23 +5,7 @@ from sklearn.metrics import mean_squared_error
 from scipy.stats import pearsonr
 import datetime
 import time
-
-
-def parseId(stringId):
-    splits = stringId.split("_")
-    return int(splits[0][1:])-1,int(splits[1][1:])-1
-
-
-def writeFile(X):
-    df = pd.read_csv('sampleSubmission.csv')
-    ids=np.array(df['Id'])
-    predictions=np.zeros(np.shape(ids)[0])
-    for i in range(np.shape(ids)[0]):
-        row,col=parseId(ids[i])
-        predictions[i] = X[row,col]
-    df = pd.DataFrame({'Id':np.ndarray.flatten(ids),'Prediction':np.ndarray.flatten(predictions)})
-    now = datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
-    df.to_csv("mySubmission"+now+".csv",index=False)
+import IOUtil
 
 
 def prediction(ratings, similarity, type):
@@ -95,7 +79,7 @@ def pearsonSim(userItemMatrix):
         pearMatrix[i] = pearson_sim
 
     pearMatrix = np.reshape(pearMatrix, (n_movies, n_movies))
-    np.save("similarityMatrix", pearMatrix)
+    #np.save("similarityMatrix", pearMatrix)
     return pearMatrix
 
 
@@ -103,7 +87,7 @@ def pearsonSim(userItemMatrix):
 n_users = 10000
 n_movies = 1000
 
-train_data = np.load("TrainSet.npy")
+train_data, _ = IOUtil.initialization()
 
 #compute the similarity(cosine)
 #user_similarity = pairwise_distances(train_data, metric='cosine')
@@ -121,7 +105,7 @@ item_pear_prediction = predictTot(train_data, pearSim )
 item_pear_prediction = np.clip(item_pear_prediction, 1, 5)
 now = datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
 np.save("item-itemPearson" + now + "", item_pear_prediction)
-writeFile(item_pear_prediction)
+#writeFile(item_pear_prediction)
 
 #item_prediction = np.clip(item_prediction, 1, 5)
 #now = datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
