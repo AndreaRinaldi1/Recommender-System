@@ -19,7 +19,7 @@ def getIdsToWrite():
 
 
 def ensemble(known_ids, idsToWrite):
-	path = "../results/"
+	path = "../../CIL_results/results/"
 	files = [f for f in listdir(path) if isfile(join(path, f))]
 
 	nrFiles = 0
@@ -65,8 +65,8 @@ def getModelBias(weights, predefined=True):
 
 def getModelBias2():
 	exp = 50
-	return {'NPCA.npy': (1/0.988)**exp, 'BPMF.npy': (1/0.99695)**exp, 'RSVD.npy': (1/0.98787)**exp, 'Ridge.npy': (1/1.0264)**exp
-			, 'item-itemPearson.npy': (1/1.05)**exp, 'KMeans.npy': (1/1.06)**exp, 'AutoEncoder.npy': (1/0.996)**exp}
+	return {'NPCA.npy': (1/1.0264)**exp, 'BPMF.npy': (1/0.99695)**exp, 'RSVD.npy': (1/0.98787)**exp, 'Ridge.npy': (1/1.0264)**exp
+			, 'item-itemPearson.npy': (1/1.05)**exp, 'KMeans.npy': (1/1.06)**exp, 'Autoencoder.npy': (1/0.996)**exp}
 
 
 def regression(train_matrix, pred_matrix, groundTruth, weights):
@@ -80,7 +80,7 @@ def regression(train_matrix, pred_matrix, groundTruth, weights):
 	return final_prediction'''
 
 	mlp = MLPRegressor()
-	params = {"hidden_layer_sizes": [(50,), (10,), (25,)], "activation":["relu"], "solver":["adam"], "alpha": [0.001, 0.01, 0.1, 1], "learning_rate": ["invscaling"]}
+	params = {"hidden_layer_sizes": [(25,), (50,), (75,), (100,), (125,)], "activation":["relu"], "solver":["adam"], "alpha": [0.0001, 0.0005, 0.001, 0.005, 0.01], "learning_rate": ["invscaling"]}
 	grid = GridSearchCV(estimator=mlp, param_grid=params, iid=False, verbose=3, n_jobs=-1, scoring="neg_mean_squared_error")
 	grid.fit(train_matrix, groundTruth)
 	final_prediction = grid.predict(pred_matrix)
