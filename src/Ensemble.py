@@ -65,7 +65,7 @@ def getModelBias(weights, predefined=True):
 
 def getModelBias2():
 	exp = 50
-	return {'NPCA.npy': (1/1.0264)**exp, 'BPMF.npy': (1/0.99695)**exp, 'RSVD.npy': (1/0.98787)**exp, 'Ridge.npy': (1/1.0264)**exp
+	return {'NPCA.npy': (1/0.988)**exp, 'BPMF.npy': (1/0.99695)**exp, 'RSVD.npy': (1/0.98787)**exp, 'Ridge.npy': (1/1.0264)**exp
 			, 'item-itemPearson.npy': (1/1.05)**exp, 'KMeans.npy': (1/1.06)**exp, 'AutoEncoder.npy': (1/0.996)**exp}
 
 
