@@ -9,16 +9,6 @@ def parseId(stringId):
 	splits = stringId.split("_")
 	return int(splits[0][1:])-1,int(splits[1][1:])-1
 
-def fillMatrix(height,width,val):
-	X = np.ones(shape=(height,width))*val
-	df = pd.read_csv("data_train.csv")
-	ids=np.array(df['Id'])
-	pred=np.array(df['Prediction'])
-	for i in range(np.shape(ids)[0]):
-		row,col=parseId(ids[i])
-		X[row,col]=pred[i]
-	return X
-
 def splitSet(validationPercentage, height,width, inp="data_train.csv"):
 
 	df = pd.read_csv(inp)
