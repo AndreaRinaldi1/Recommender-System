@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 import math
-
+import os
 
 
 def parseId(stringId):
@@ -19,31 +19,49 @@ def fillMatrix(height,width,val):
 	return X
 
 
-def splitSet(validationPercentage, height,width):
+def splitSetCSV(validationPercentage, height,width, inp="../data/data_train.csv"):
 
-	df = pd.read_csv("data_train.csv")
+	df = pd.read_csv(inp)
 	ids=np.array(df['Id'])
 	pred=np.array(df['Prediction'])
 	nrRatings = np.shape(ids)[0]
 	nrTrain = (int)(nrRatings*(1-validationPercentage))
+	nrTest = nrRatings-nrTrain
 	indicesTrain = np.random.choice(nrRatings,nrTrain,replace=False)
 	Xtrain = np.zeros((height,width))
 	Xtest = np.zeros((height,width))
 
-	nrTrain=0
 	for i in indicesTrain:
 		row,col=parseId(ids[i])
 		Xtrain[row,col] = pred[i]
-		nrTrain+=1
 		
-	nrTest=0
 	indicesTest = np.setdiff1d(np.arange(nrRatings), indicesTrain)
 	for i in indicesTest:
 		row,col=parseId(ids[i])
 		Xtest[row,col] = pred[i]
-		nrTest+=1
 
-	return Xtrain,Xtest, nrTrain, nrTest
+	if os.path.exists("temporary.csv"):
+   		os.remove("temporary.csv")
+	return Xtrain,Xtest,nrTrain, nrTest
+
+
+def splitNpy(X, height, width, splitPercentage):
+	nonzeros = np.nonzero(X)
+	ids = np.empty(np.shape(nonzeros[0])[0], dtype="U12") 
+	predictions = np.empty(np.shape(nonzeros[0])[0], dtype="i")
+	for i in range(np.shape(nonzeros[0])[0]):
+		if(i%100000 == 0):
+			print(i)
+		h = nonzeros[0][i]
+		w = nonzeros[1][i]
+		idString = "r"+str(h+1)+"_c"+str(w+1)
+		pred = X[h,w]
+		ids[i] = idString
+		predictions[i] = pred
+	
+	df = pd.DataFrame({'Id':ids,'Prediction':predictions})
+	df.to_csv("temporary.csv",index=False)	
+	return splitSetCSV(splitPercentage,height,width, inp="temporary.csv")
 
 
 def evaluate(Xcompleted, Xtest):
@@ -59,18 +77,6 @@ def evaluate(Xcompleted, Xtest):
 
 
 
-#Example of usage:
-height = 10000
-width = 1000
-splitPercentage = 0.05
-Xtrain, Xtest, nrTrain, nrTest= splitSet(splitPercentage,height,width)
-print("Number of train: "+str(nrTrain))
-print("Number of test: "+str(nrTest))
-np.save("TrainSet.npy",Xtrain)
-np.save("ValidationSet.npy",Xtest)
-
-#Xcomplete = myModel(Xtrain)
-#print(evaluate(Xcomplete, Xtest))
 
 
 

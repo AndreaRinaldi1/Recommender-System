@@ -49,12 +49,7 @@ def writeFile(X):
     now = datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
     df.to_csv("mySubmission"+now+".csv",index=False)
 
-#Example of use:
-#height = 10000
-#width = 1000
-#X=fillMatrix(height,width,0)
-#Y = myModel(X)
-#writeToCSV(Y)
+
 
 
 
