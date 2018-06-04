@@ -5,7 +5,9 @@ import time
 import CV
 import IOUtil
 
-
+#This is an implementation of the paper:
+#Fast Nonparametric Matrix Factorization for Large-scale Collaborative Filtering
+#Kai Yu, Shenghuo Zhu, John Lafferty,Yihong Gong
 def npca(Y, Yval, nrTrain, nrTest):
 	N = np.shape(Y)[1] #The width (items)
 	M = np.shape(Y)[0] #The height (users)
@@ -41,6 +43,14 @@ def npca(Y, Yval, nrTrain, nrTest):
 		previousLoss = loss
 	return K,mu
 
+def predict(i,j,Y,K,mu):
+	Oi = np.nonzero(Y[i,:])[0]
+	first = K[j,Oi]
+	second = np.linalg.inv(K[np.ix_(Oi,Oi)]) 
+	third = np.vstack((Y[i,Oi]-mu[Oi]))
+	return np.matmul(np.matmul(first,second),third) + mu[j]
+
+
 def squaredDiffAvg(Y,average):
 	M,N = np.shape(Y)
 	squaredSum = 0
@@ -58,29 +68,22 @@ def fillValidationMatrix(Xtrain, Xval, K, mu):
 		Xpred[h,w] = predict(h,w,Xtrain, K, mu)
 	return Xpred
 		
-def predict(i,j,Y,K,mu):
-	Oi = np.nonzero(Y[i,:])[0]
-	first = K[j,Oi]
-	second = np.linalg.inv(K[np.ix_(Oi,Oi)]) 
-	third = np.vstack((Y[i,Oi]-mu[Oi]))
-	return np.matmul(np.matmul(first,second),third) + mu[j]
-	
 
 
-	
-height = 10000
-width = 1000
+if __name__ == "__main__":	
+	height = 10000
+	width = 1000
+	X = np.load("../data/TrainSet.npy")
+	Xtrain, Xval, nrTrain, nrVal = CV.splitNpy(X, 10000,1000,0.05)
+	K, mu = npca(Xtrain, Xval, nrTrain, nrVal)
 
-X = np.load("../data/TrainSet.npy")
-Xtrain, Xval, nrTrain, nrVal = CV.splitNpy(X, 10000,1000,0.05)
-K, mu = npca(Xtrain, Xval, nrTrain, nrVal)
-#Predict the complete matrix for model combining
-Xcomplete = np.zeros((10000,1000))
-for i in range(10000):
-	for j in range(1000):
-		Xcomplete[i,j] = predict(i,j,X, K, mu)
-np.save("FullMatrixNPCA.npy", Xcomplete) 
-IOUtil.writeFile(Xcomplete)
+	#Predict the complete matrix for model combining
+	Xcomplete = np.zeros((10000,1000))
+	for i in range(10000):
+		for j in range(1000):
+			Xcomplete[i,j] = predict(i,j,X, K, mu)
+	np.save("FullMatrixNPCA.npy", Xcomplete) 
+	IOUtil.writeFile(Xcomplete)
 
 
 

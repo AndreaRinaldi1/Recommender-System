@@ -79,4 +79,3 @@ def evaluate(Xcompleted, Xtest):
 
 
 
-
