@@ -1,0 +1,6 @@
+
+# latex-related files
+*.log
+*.aux
+*.gz
+*.txt
