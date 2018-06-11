@@ -9,6 +9,7 @@
 
 
 
+
 \begin{document}
 \title{Computational Intelligence Laboratory Project}
 
@@ -53,8 +54,8 @@ $$
 
 \begin{description}
 
-\item[\emph{User-based with Pearson}]\ \\
-This method uses similarity between users' ratings to recommend items to the target user. As a measure of similarity we use Pearson's correlation, which is defined as follows [Paper]:
+\item[\emph{Item-based with Pearson}]\ \\
+This method uses similarity between items' ratings to recommend items to the target user. As a measure of similarity we use Pearson's correlation, which is defined as follows [Paper]:
 
 $$
 sim_p(i, j) = \frac{\sum_{u \in U} (r_{i,u} - \bar{r_i})(r_{j,u} - \bar{r_j})}{\sqrt{\sum_{u \in U} (r_{i,u} - \bar{r_i})^2}	\sqrt{\sum_{u \in U} (r_{j,u} - \bar{r_j})^2}}
@@ -115,7 +116,14 @@ $$
 %\noindent where $z_{ij}$ indicates whether user $i$ is in cluster $j$ or not, $\Vert \textbf{r}_i - \textbf{u}_j \Vert^2)$ is computed for all movies rated by user $i$, with $\textbf{r}_i$ being the actual rating and $\textbf{u}_j$ the predicted one.	
 
 \item[\emph{BPMF}] \ \\
-This method aims at improving Probabilistic Matrix Factorization techniques by taking a Bayesian approach, and is described in [BPMF paper]. In BPMF, the conditional distribution over the observed ratings $R$ and the prior distributions over user-specific and movie-specific latent feature matrices $U$ and $V$ are assumed to be Gaussian, whereas the user and movie hyper parameters are assumed to follow a Wishart-Gaussian distribution. The prediction of rating $R_{ij}^*$ is given by
+This method aims at improving Probabilistic Matrix Factorization techniques by taking a Bayesian approach, and is described in \cite{BPMF}. In traditional probabilistic matrix factorization the user-specific and movie-specific latent feature matrices $U$ and $V$ are assumed to be Gaussian with mean 0 and covariance $\alpha^{-1} I$, where $\alpha$ is a precision factor.  
+In BPMF, the conditional distribution over the observed ratings $R$ and the prior distributions over user-specific and movie-specific latent feature matrices $U$ and $V$ are assumed to be Gaussian with mean $\mu_{U}$ and covariance $\Lambda_{U}$, respectively $\mu_{V}$ and $\Lambda_{V}$, whereas the user and movie hyperparameters ($\Theta_{U}=\{\mu_{U},\Lambda_{U}\}, \Theta_{V}=\{\mu_{V},\Lambda_{V}\}$) are assumed to follow a Wishart-Gaussian or a gaussian distribution:
+$$
+\begin{aligned}
+p(\Theta_{U} \vert \Theta_{0}) =  \mathcal{N}(\mu_{U} \vert \mu_{0}, (\beta_{0}\Lambda_{U})^{-1})\mathcal{W}(\Lambda_{U} \vert W_{0}, \nu_{0})
+\end{aligned}
+$$
+and the prediction of rating $R_{ij}^*$ is obtained by marginalizing over the model parameters and hyperparameters:
 
 $$
 \begin{aligned}
@@ -123,33 +131,32 @@ p(R_{ij}^* \vert R, \Theta_0) =  \int\int p(R_{ij}^* \vert U_i,V_j)p(U,V \vert R
 p(\Theta_U \Theta_V \vert \Theta_0)d \left\lbrace U,V \right\rbrace  d \left\lbrace \Theta_U, \Theta_V \right\rbrace
 \end{aligned}
 $$
-
-\noindent However, this evaluation is intractable. The authors thus suggest the use of a MCMC-based method to approximate the above integrals. In particular, they use the Gibbs sampling algorithm to implement BPMF. \emph{Figure \ref{gibbs}} shows the Gibbs algorithm as shown in [BPMF paper].
+\noindent However, this evaluation is intractable. The authors of the paper thus suggest to use an MCMC-based method to approximate the above integrals. In particular, they use the Gibbs sampling algorithm to implement BPMF as shown in \emph{Figure \ref{gibbs}}.
 
 \begin{figure}[h!]
 \centering
 \includegraphics[scale=0.35]{gibbs.png}
-\caption{Gibbs sampling algorithm as shown in [BPMF paper]}
+\caption{Gibbs sampling algorithm as shown in \cite{BPMF}}
 \label{gibbs}
 \end{figure} 
 
 \item[\emph{NPCA}] \ \\
-NPCA is an extension of Probabilistic PCA which deals with infinitely many latent factors. We implemented the model following [NPCA paper]. In this situation, working directly with the vector of latent factors $\textbf{u}$ and $\textbf{v}$ is intractable and the vector $\textbf{x}_i = \left[u_i^Tv_1, \dots , u_i^Tv_j, \dots , u_i^Tv_N \right] $ is used instead. The model then describes a latent process $X$ and an observational one $Y$ described by the following distribution:
+NPCA is an extension of Probabilistic PCA which deals with infinitely many latent factors. We implemented the model following \cite{npca}. In this situation, working directly with the vector of latent factors $\textbf{u}$ and $\textbf{v}$ is intractable and the vector $\textbf{x}_i = \left[u_i^Tv_1, \dots , u_i^Tv_j, \dots , u_i^Tv_N \right] $ is used instead. The model then describes a latent process $X$ and an observational one $Y$ described by the following distribution:
 $$
 \int p(Y,X \vert K, \lambda)dX = \prod_{i=1}^M \mathcal{N}(y_{\mathbb{O}_i};0, K_{\mathbb{O}_i} + \lambda I)
 $$
 
-\noindent where we keep the same notation as in [NPCA paper] and which is maximized using an EM algorithm. The authors formalize a first EM algorithm which is however computationally too costly, and thus they suggest an optimized one which is depicted in \emph{Figure \ref{emnpca}}.
+\noindent where Y is the user-item matrix, K and lambda some hyperparameters, and $\mathbb{O}_{i}$ the indices of the observed items for a given user $i$. This equation is maximized using an EM algorithm. The authors formalize a fast EM algorithm that avoids computing an NxN inverse matrix called Fast NPCA which is depicted in \emph{Figure \ref{emnpca}}.
 
 \begin{figure}[h!]
 \centering
 \includegraphics[scale=0.6]{emnpca.png}
-\caption{Fast NPCA EM algorithm as shown in [NPCA paper]}
+\caption{Fast NPCA EM algorithm as shown in \cite{npca}}
 \label{emnpca}
 \end{figure} 
 
-\item[Auto-encoder]
-
+\item[Auto-encoder] \ \\
+The autoencoder is bullshit. I tell you 
 
 \end{description}
 
@@ -203,9 +210,6 @@ We present the results of single models in \emph{Table \ref{tabres}} and of the 
 
 \section{Conclusions}
 \label{conc}
-
-
-
-%\bibliographystyle{IEEEtran}
- %\bibliography{report}
+\bibliographystyle{IEEEtran}
+\bibliography{biblio}
 \end{document}
