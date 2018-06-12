@@ -3,6 +3,7 @@ import pandas as pd
 import time
 import datetime
 
+
 complete_trainset = "../data/data_train.csv"
 training_set = "../data/TrainSet.npy"
 sample_submission = "../data/sampleSubmission.csv"
@@ -11,6 +12,7 @@ sample_submission = "../data/sampleSubmission.csv"
 def parseId(stringId):
 	splits = stringId.split("_")
 	return int(splits[0][1:])-1,int(splits[1][1:])-1
+
 
 def fillMatrix(height,width,val):
 	X = np.ones(shape=(height,width))*val
@@ -21,6 +23,7 @@ def fillMatrix(height,width,val):
 		row,col=parseId(ids[i])
 		X[row,col]=pred[i]
 	return X
+
 
 def initialization():
     full_matrix = np.load(training_set)
@@ -48,10 +51,4 @@ def writeFile(X):
     df = pd.DataFrame({'Id':np.ndarray.flatten(ids),'Prediction':np.ndarray.flatten(predictions)})
     now = datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
     df.to_csv("mySubmission"+now+".csv",index=False)
-
-
-
-
-
-
 

@@ -5,7 +5,7 @@ import tensorflow as tf
 import os
 from scipy.interpolate import interp1d
 from autoEncoder import autoEncoder
-import IOUtil
+import IOUtils
 import CV
 	
 
@@ -74,7 +74,7 @@ def Trainautoencoder(Xtrain, Xtrain_mask, Xtest, Xtest_mask, parameters, doPredi
 						predictions = model.predict(session, Xtrain)
 						predictions = denormalizeData(predictions)
 						np.save("FullMatrixAuto.npy",predictions.T)
-						IOUtil.writeFile(predictions.T)
+						#IOUtils.writeFile(predictions.T)
 						print("Predictions made")
 						return
 	
@@ -86,7 +86,7 @@ def Trainautoencoder(Xtrain, Xtrain_mask, Xtest, Xtest_mask, parameters, doPredi
 		if doPrediction:
 			predictions = model.predict(session, Xtrain)
 			predictions = denormalizeData(predictions)
-			IOUtil.writeFile(predictions.T)
+			#IOUtils.writeFile(predictions.T)
 			np.save("FullMatrixAuto.npy",predictions.T)
 			print("Predictions made at the very end")
 					

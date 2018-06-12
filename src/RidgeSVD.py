@@ -2,23 +2,11 @@ import numpy as np
 import pandas as pd
 import datetime
 import time
-import IOUtil
-
-
-def get_rating(user, movie, U, ZT, b, b_u, b_m_weighted):
-    return b_u[user] + b_m_weighted[movie] + U[user, :].dot(ZT[:, movie])
-
-
-def getFullMatrix(A, U, ZT, b, b_u, b_m_weighted):
-    fullMatrix = np.zeros((A.shape[0], A.shape[1]))
-    for i in range(A.shape[0]):
-        for j in range(A.shape[1]):
-            fullMatrix[i, j] = get_rating(i, j,U, ZT, b, b_u, b_m_weighted)
-    return fullMatrix
+import IOUtils
 
 
 def RidgePostProcessing():
-    A, Ind = IOUtil.initialization()
+    A, Ind = IOUtils.initialization()
 
     final = np.load("../results/RSVD.npy")
 
@@ -69,9 +57,25 @@ def RidgePostProcessing():
     print(postFinal)
     now = datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
     np.save("Ridge" + now + "", postFinal)
-    #IOUtil.writeFile(postFinal)
+    #IOUtils.writeFile(postFinal)
 
 
-num_users = 10000
-num_movies = 1000
-RidgePostProcessing()
+def get_rating(user, movie, U, ZT, b, b_u, b_m_weighted):
+    return b_u[user] + b_m_weighted[movie] + U[user, :].dot(ZT[:, movie])
+
+
+def getFullMatrix(A, U, ZT, b, b_u, b_m_weighted):
+    fullMatrix = np.zeros((A.shape[0], A.shape[1]))
+    for i in range(A.shape[0]):
+        for j in range(A.shape[1]):
+            fullMatrix[i, j] = get_rating(i, j,U, ZT, b, b_u, b_m_weighted)
+    return fullMatrix
+
+
+def main():
+    RidgePostProcessing()
+
+
+
+if __name__ == '__main__':
+    main()
