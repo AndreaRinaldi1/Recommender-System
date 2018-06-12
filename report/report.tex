@@ -133,7 +133,7 @@ p(\Theta_U \Theta_V \vert \Theta_0)d \left\lbrace U,V \right\rbrace  d \left\lbr
 $$
 \noindent However, this evaluation is intractable. The authors of the paper thus suggest to use an MCMC-based method to approximate the above integrals. In particular, they use the Gibbs sampling algorithm to implement BPMF as shown in \emph{Figure \ref{gibbs}}.
 
-\begin{figure}[h!]
+\begin{figure}[t!]
 \centering
 \includegraphics[scale=0.35]{gibbs.png}
 \caption{Gibbs sampling algorithm as shown in \cite{BPMF}}
@@ -148,19 +148,65 @@ $$
 
 \noindent where Y is the user-item matrix, K and lambda some hyperparameters, and $\mathbb{O}_{i}$ the indices of the observed items for a given user $i$. This equation is maximized using an EM algorithm. The authors formalize a fast EM algorithm that avoids computing an NxN inverse matrix called Fast NPCA which is depicted in \emph{Figure \ref{emnpca}}.
 
-\begin{figure}[h!]
+\begin{figure}[t!]
 \centering
 \includegraphics[scale=0.6]{emnpca.png}
 \caption{Fast NPCA EM algorithm as shown in \cite{npca}}
 \label{emnpca}
 \end{figure} 
 
-\item[Auto-encoder] \ \\
-The autoencoder is bullshit. I tell you 
+\item[Autoencoder] \ \\
+An autoencoder provides a method to lean a non-linear mapping from $\mathbb{R}^{m}$ to $\mathbb{R}^{m}$. As shown in \cite{autorec}, this neural network can be adapted to the problem of collaborative filtering determined by a user-item rating matrx $M \times N$, by using each partially observed item vector $I_{i} \in {R}^{m} , i \in \{1,...n\}$ (\emph{Figure \ref{autoenc}}).
+
+\begin{figure}[t!]
+\centering
+\includegraphics[scale=0.25]{autoenc.png}
+\caption{Autoencoder for collaborative filtering \cite{autorec}}
+\label{autoenc}
+\end{figure} 
+A random number set of observed ratings of $I_{i}$ will then be set to 0, corresponding to a non-observed rating. The objective function formalizes then a linear combination of the L2-error on the predicted output for these hidden values, and the L2-error on the output of the initially observed ratings.
+As suggested in \cite{DBLP:journals/corr/StrubMG16}, the loss function will then be: 
+$$
+\begin{aligned}
+L_{2,\alpha,\beta}(x,\widetilde{x}) = \alpha(\sum\limits_{j \in \mathcal{C}(\widetilde{x})} [nn(\widetilde{x})_{j}]^{2})+ \\ \beta(\sum\limits_{j \notin \mathcal{C}(\widetilde{x})} [nn(\widetilde{x})_{j}]^{2})
+\end{aligned}
+$$
+where $\widetilde{x}$ is the corrupted version of $x$ and $nn(\widetilde{x}_j)$ is the $j^{th}$ of the network fed with $x$. 
+\newline
+Additionaly to adding L2-regularization terms for the network weights, we corrupt the input further as suggested in \cite{Vincent:2010:SDA:1756006.1953039}. Before hidding some part of the input, we first add random gaussian noise and what the authors call "salt and pepper" noise, which consists of randomly putting some elements to the minimum rating and some to the maximum rating.
+\newline 
+Finally, we also tested the possibility to add more layers to the autoencoder to learn more complex features as proposed in \cite{Kuchaiev2017TrainingDA}. 
 
 \end{description}
 
 \subsection{Ensemble}
+The performance of an invidual model can depend on multiple factors like the size of the rating matrix, its sparsity and other non-obvious parameters \cite{comparative}. 
+To be able to combine the strength of each individual model, we determined the optimal linear combination of the predictions made by these models on a validation set. 
+\[
+\begin{bmatrix}
+    pred_{1,1}  & \hdots & pred_{1,m}\\
+    pred_{2,1}  & \hdots & pred_{2,m}\\
+    \hdotsfor{3} \\
+    pred_{d,1}  & \hdots & pred_{d,m}
+\end{bmatrix}
+\begin{bmatrix}
+    w_{1}\\
+    \hdots \\
+    w_{m}\\
+\end{bmatrix}
+=
+\begin{bmatrix}
+    val_{1}\\
+    val_{2}\\
+    \hdotsfor{1} \\
+    val_{d}
+\end{bmatrix}
+\]
+where the d predictions of the m models are linearly combined. We also added a L2-regularization term to avoid overfitting on the validation set. 
+\newline
+We also combined the features using a Multi Layer Perceptron, using the rows of the above left matrix as training input. Due to the complexity of this model, the variance had to be generously regularized. 
+\newline
+The results have been showing that it was essential to keep a small part of the training data exclusively for model combining so that the trained models can be combined over true validation data.  
 
 \section{Evaluation}
 \label{res}

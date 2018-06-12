@@ -2,43 +2,25 @@ import numpy as np
 import pandas as pd
 import datetime
 import time
-import random
-import math
-import IOUtil
+import IOUtils
+import CV
 
 
-def hide_values(Ind):
-    x = Ind[np.argsort(Ind[:, 0])]
-    index = 0
-    hidden_values = []
-    while index < len(x):
-        count = 0.0
-        while index+1 < len(x) and x[index+1,0] == x[index,0]:
-            count += 1.0
-            index += 1
-        #print(count)
-        arg_hidden_values = [random.randint(0, count) for _ in range(math.ceil(count/10.0))]
-        #print([random.randint(0, count) for _ in range (math.ceil(count/10.0)) ])
-        for i in arg_hidden_values:
-            hidden_values.append(x[index-i])
-        index += 1
-    return hidden_values
+def sgd():
+    for usr, mov in remaining_values:
+        #Compute error
+        prediction = get_rating(usr, mov)
+        e = (training_matrix[usr, mov] - prediction)
 
+        #Update biases
+        tmp_b_u = b_u[usr]
+        b_u[usr] += lr * (e - reg_b * (b_u[usr] + b_m_weighted[mov] - b))
+        b_m_weighted[mov] += lr * (e - reg_b * (b_m_weighted[mov] + tmp_b_u - b))
 
-def create_training_set():
-    hidden_values = hide_values(Ind)
-
-    training_matrix = full_matrix.copy()
-    for row, col in hidden_values:
-        training_matrix[row, col] = 0
-
-    remaining_values = []
-    for i in range(0, len(full_matrix)):
-        for j in range(0, len(full_matrix[0])):
-            if training_matrix[i, j] != unknown_value:
-                remaining_values.append([i, j])
-
-    return training_matrix, remaining_values, hidden_values
+        # Update user and item latent feature matrices
+        tmp_U = U[usr, :]
+        U[usr, :] += lr * (e * ZT[:, mov] - reg * U[usr, :])
+        ZT[:, mov] += lr * (e * tmp_U - reg * ZT[:, mov])
 
 
 def compute_biases():
@@ -85,24 +67,6 @@ def RMSE():
     return np.sqrt(error / len(hidden_values))
 
 
-def sgd():
-    for usr, mov in remaining_values:
-        #Compute error
-        prediction = get_rating(usr, mov)
-        e = (training_matrix[usr, mov] - prediction)
-
-        #Update biases
-        tmp_b_u = b_u[usr]
-        b_u[usr] += lr * (e - reg_b * (b_u[usr] + b_m_weighted[mov] - b))
-        b_m_weighted[mov] += lr * (e - reg_b * (b_m_weighted[mov] + tmp_b_u - b))
-
-        # Update user and item latent feature matrices
-        tmp_U = U[usr, :]
-        U[usr, :] += lr * (e * ZT[:, mov] - reg * U[usr, :])
-        ZT[:, mov] += lr * (e * tmp_U - reg * ZT[:, mov])
-
-
-
 def getFullMatrix():
     complete_matrix = np.zeros((num_users, num_movies))
     for i in range(num_users):
@@ -110,38 +74,7 @@ def getFullMatrix():
             complete_matrix[i, j] = get_rating(i, j)
     return complete_matrix
 
-'''
-def training(lr, reg, reg_b, factor):
-    # weights = np.asarray([random.uniform(0.7, 1.3) for _ in range(factor)])
-    # print(weights)
-    full_matrix, Ind = initialization()
-    training_matrix, remaining_values, hidden_values = create_training_set(full_matrix, Ind)
-    b, b_u, w_u, b_m_weighted = compute_biases(training_matrix)
-    training_matrix = fill_matrix(training_matrix, w_u, b_m_weighted)
-    print("Computing SVD")
-    U, s, ZT = np.linalg.svd(training_matrix, full_matrices=True)
-    D = np.diag(s[:factor])
-    U = np.matmul(U[:, :factor], np.sqrt(D))
-    ZT = np.matmul(np.sqrt(D), ZT[:factor, :])
 
-    training_process = []
-    mse = 10000
-    prev_mse = 100000
-    i = 0
-    while prev_mse - mse > 0.0005:
-        prev_mse = mse
-
-        np.random.shuffle(Ind)
-        U, ZT, b_u, b_m_weighted = sgd(lr, reg, reg_b, training_matrix, remaining_values, U, ZT, b, b_u, b_m_weighted)
-        b = np.mean(getFullMatrix(num_users, num_movies, U, ZT, b_u, b_m_weighted))
-        mse = RMSE(full_matrix, hidden_values, U, ZT, b_u, b_m_weighted)
-        training_process.append(mse)
-        # print(U)
-        # print(ZT)
-        print("Iteration: %d ; error = %.4f" % (i + 1, mse))
-        i += 1
-    return mse, getFullMatrix(num_users, num_movies, U, ZT, b_u, b_m_weighted)
-'''
 
 num_users = 10000
 num_movies = 1000
@@ -155,8 +88,8 @@ for reg in [0.01, 0.02, 0.05]:
             for iteration in range(2):
                 print("RSVD_R" + str(reg) + "_RB" + str(reg_b) + "_F" + str(factor) + "_" + str(iteration))
 
-                full_matrix, Ind = IOUtil.initialization()
-                training_matrix, remaining_values, hidden_values = create_training_set()
+                full_matrix, Ind = IOUtils.initialization()
+                training_matrix, remaining_values, hidden_values = CV.create_training_set(Ind, full_matrix, unknown_value)
 
                 b_u = np.zeros(num_users)
                 b = 0
@@ -187,8 +120,6 @@ for reg in [0.01, 0.02, 0.05]:
                     print("Iteration: %d ; error = %.4f" % (i + 1, mse))
                     i += 1
 
-
-                #mse, final = training(lr, reg, reg_b,  factors)
                 final = np.clip(getFullMatrix(), 1, 5)
                 #now = datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
                 np.save("RSVD_R" + str(reg) + "_RB" + str(reg_b) + "_F" + str(factor) + "_E" + str(mse) + "_" + str(iteration), final)

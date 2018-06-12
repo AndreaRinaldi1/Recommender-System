@@ -1,22 +1,9 @@
 import numpy as np
 import pandas as pd
-import math
 import os
-
-
-def parseId(stringId):
-	splits = stringId.split("_")
-	return int(splits[0][1:])-1,int(splits[1][1:])-1
-
-def fillMatrix(height,width,val):
-	X = np.ones(shape=(height,width))*val
-	df = pd.read_csv("data_train.csv")
-	ids=np.array(df['Id'])
-	pred=np.array(df['Prediction'])
-	for i in range(np.shape(ids)[0]):
-		row,col=parseId(ids[i])
-		X[row,col]=pred[i]
-	return X
+import IOUtils
+import math
+import random
 
 
 def splitSetCSV(validationPercentage, height,width, inp="../data/data_train.csv"):
@@ -32,16 +19,16 @@ def splitSetCSV(validationPercentage, height,width, inp="../data/data_train.csv"
 	Xtest = np.zeros((height,width))
 
 	for i in indicesTrain:
-		row,col=parseId(ids[i])
+		row,col=IOUtils.parseId(ids[i])
 		Xtrain[row,col] = pred[i]
 		
 	indicesTest = np.setdiff1d(np.arange(nrRatings), indicesTrain)
 	for i in indicesTest:
-		row,col=parseId(ids[i])
+		row,col=IOUtils.parseId(ids[i])
 		Xtest[row,col] = pred[i]
 
 	if os.path.exists("temporary.csv"):
-   		os.remove("temporary.csv")
+		os.remove("temporary.csv")
 	return Xtrain,Xtest,nrTrain, nrTest
 
 
@@ -64,18 +51,35 @@ def splitNpy(X, height, width, splitPercentage):
 	return splitSetCSV(splitPercentage,height,width, inp="temporary.csv")
 
 
-def evaluate(Xcompleted, Xtest):
-	nonzeros = np.nonzero(Xtest)
-	squareSum = 0
-	nrRatings = 0
-	for i in range(np.shape(nonzeros[0])[0]):
-		h = nonzeros[0][i]
-		w = nonzeros[1][i]
-		squareSum+=(Xtest[h,w]-Xcompleted[h,w])**2
-		nrRatings+=1
-	return math.sqrt(squareSum*1.0/nrRatings)
+def hide_values(Ind):
+    x = Ind[np.argsort(Ind[:, 0])]
+    index = 0
+    hidden_values = []
+    while index < len(x):
+        count = 0.0
+        while index+1 < len(x) and x[index+1,0] == x[index,0]:
+            count += 1.0
+            index += 1
+        #print(count)
+        arg_hidden_values = [random.randint(0, count) for _ in range(math.ceil(count/10.0))]
+        #print([random.randint(0, count) for _ in range (math.ceil(count/10.0)) ])
+        for i in arg_hidden_values:
+            hidden_values.append(x[index-i])
+        index += 1
+    return hidden_values
 
 
+def create_training_set(Ind, full_matrix, unknown_value):
+    hidden_values = hide_values(Ind)
 
+    training_matrix = full_matrix.copy()
+    for row, col in hidden_values:
+        training_matrix[row, col] = 0
 
+    remaining_values = []
+    for i in range(0, len(full_matrix)):
+        for j in range(0, len(full_matrix[0])):
+            if training_matrix[i, j] != unknown_value:
+                remaining_values.append([i, j])
 
+    return training_matrix, remaining_values, hidden_values

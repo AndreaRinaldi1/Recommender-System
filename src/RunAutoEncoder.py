@@ -5,7 +5,7 @@ import tensorflow as tf
 import os
 from scipy.interpolate import interp1d
 from autoEncoder import autoEncoder
-import IOUtil
+import IOUtils
 import CV
 	
 
@@ -77,7 +77,7 @@ def Trainautoencoder(Xtrain, Xtrain_mask, Xtest, Xtest_mask, parameters, doPredi
 							IOUtil.writeFile(predictions.T)
 							print("Predictions made")
 						return loss
-	
+
 					previousLoss=loss
 					print(previousLoss)
 				else:

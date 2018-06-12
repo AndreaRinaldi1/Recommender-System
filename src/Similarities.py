@@ -5,7 +5,7 @@ from sklearn.metrics import mean_squared_error
 from scipy.stats import pearsonr
 import datetime
 import time
-import IOUtil
+import IOUtils
 
 
 def prediction(ratings, similarity, type):
@@ -87,7 +87,7 @@ def pearsonSim(userItemMatrix):
 n_users = 10000
 n_movies = 1000
 
-train_data, _ = IOUtil.initialization()
+train_data, _ = IOUtils.initialization()
 
 #compute the similarity(cosine)
 #user_similarity = pairwise_distances(train_data, metric='cosine')

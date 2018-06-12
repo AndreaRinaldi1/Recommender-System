@@ -3,7 +3,7 @@ import pandas as pd
 import math
 import time
 import CV
-import IOUtil
+import IOUtils
 
 #This is an implementation of the paper:
 #Fast Nonparametric Matrix Factorization for Large-scale Collaborative Filtering
@@ -83,7 +83,7 @@ if __name__ == "__main__":
 		for j in range(1000):
 			Xcomplete[i,j] = predict(i,j,X, K, mu)
 	np.save("FullMatrixNPCA.npy", Xcomplete) 
-	IOUtil.writeFile(Xcomplete)
+	#IOUtils.writeFile(Xcomplete)
 
 
 

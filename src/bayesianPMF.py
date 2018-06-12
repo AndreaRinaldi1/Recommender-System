@@ -3,7 +3,7 @@ import pandas as pd
 from scipy.stats import wishart
 import math
 import time
-import IOUtil
+import IOUtils
 import CV
 
 def bpmf(Y, Ytest, featureCount, itemCount, userCount, nrRatings):
@@ -159,7 +159,7 @@ if __name__ == "__main__":
 	features = 3
 	U, V, offset = bpmf(Xtrain,Xval, features,width,height,nrTrain)
 	Xcomplete = predict(U,V,offset)	
-	IOUtil.writeFile(Xcomplete)
+	#IOUtils.writeFile(Xcomplete)
 	np.save("BPMF.npy",Xcomplete)
 	
 

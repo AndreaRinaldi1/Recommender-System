@@ -3,59 +3,7 @@ import matplotlib
 matplotlib.use('agg')
 import matplotlib.pyplot as plt
 import random
-import IOUtil
-
-def compute_centroids(users_in_centroid):
-
-    centroid = np.zeros(width)
-    total_mask = np.zeros(width)
-    for user in users_in_centroid:
-        mask = X[user, :] != 0
-        total_mask += mask
-        centroid += X[user, :]
-    if np.any(total_mask == 0):
-        for i in np.argwhere(total_mask == 0):
-            a = X[:, i]
-            a = a[np.where(a != 0)]
-            mean = np.mean(a)
-            centroid[i] = mean
-        total_mask[total_mask == 0] = 1
-    centroid = centroid / total_mask
-    return centroid
-
-
-def compute_initial_centroids(chosen_centroids, num_of_samples):
-    distances = np.zeros((num_of_users, len(chosen_centroids)))
-    for user in range(num_of_users):
-        movies = np.where(X[user, :] != 0)
-        for centroid in range(len(chosen_centroids)):
-            distances[user, centroid] = np.sum(np.abs(X[user, movies] - chosen_centroids[centroid][movies]))
-
-    user_distances = np.amin(distances, axis=1)
-    user_distances = user_distances / np.sum(user_distances)
-    samples = np.random.choice(a=num_of_users, size=random.choice(num_of_samples), replace=False, p=user_distances)
-    return compute_centroids(samples)
-
-def update_assignments(users_to_centroids, num_of_centroids, centroids):
-    index_usr = 0
-    total_error = np.zeros(num_of_centroids)
-    while index_usr < len(Ind):
-        sum_user = np.zeros(num_of_centroids)
-        usr = Ind[index_usr, 0]
-        beginning_index_usr = index_usr
-        for index_mu in range(num_of_centroids):
-            index_usr = beginning_index_usr
-            while index_usr < len(Ind) and (
-                    index_usr == beginning_index_usr or Ind[index_usr, 0] == Ind[index_usr - 1, 0]):
-                mov = Ind[index_usr, 1]
-                sum_user[index_mu] += (X[usr, mov] - centroids[index_mu, mov])**2
-                index_usr += 1
-        best_centroid = np.argmin(sum_user)
-        users_to_centroids[usr] = best_centroid
-        total_error[best_centroid] += np.min(sum_user)
-
-    sum_total_error = np.sum(total_error)
-    return sum_total_error, users_to_centroids
+import IOUtils
 
 
 def kmeans_algorithm(num_of_centroids, total_number_of_iterations, num_of_samples):
@@ -64,8 +12,6 @@ def kmeans_algorithm(num_of_centroids, total_number_of_iterations, num_of_sample
     users_to_centroids = np.zeros((len(distinct_users), 2)).astype(int)
     users_to_centroids[:, 0] = distinct_users
     users_to_centroids = dict(users_to_centroids)
-
-    num_of_users = 10000
 
     #compute first centroid
     first_centroid = compute_centroids(random.sample(range(num_of_users), random.choice(num_of_samples)))
@@ -115,6 +61,59 @@ def kmeans_algorithm(num_of_centroids, total_number_of_iterations, num_of_sample
     return np.sum(sum_total_error), centroids, users_to_centroids
 
 
+def compute_centroids(users_in_centroid):
+
+    centroid = np.zeros(width)
+    total_mask = np.zeros(width)
+    for user in users_in_centroid:
+        mask = X[user, :] != 0
+        total_mask += mask
+        centroid += X[user, :]
+    if np.any(total_mask == 0):
+        for i in np.argwhere(total_mask == 0):
+            a = X[:, i]
+            a = a[np.where(a != 0)]
+            mean = np.mean(a)
+            centroid[i] = mean
+        total_mask[total_mask == 0] = 1
+    centroid = centroid / total_mask
+    return centroid
+
+
+def compute_initial_centroids(chosen_centroids, num_of_samples):
+    distances = np.zeros((num_of_users, len(chosen_centroids)))
+    for user in range(num_of_users):
+        movies = np.where(X[user, :] != 0)
+        for centroid in range(len(chosen_centroids)):
+            distances[user, centroid] = np.sum(np.abs(X[user, movies] - chosen_centroids[centroid][movies]))
+
+    user_distances = np.amin(distances, axis=1)
+    user_distances = user_distances / np.sum(user_distances)
+    samples = np.random.choice(a=num_of_users, size=random.choice(num_of_samples), replace=False, p=user_distances)
+    return compute_centroids(samples)
+
+
+def update_assignments(users_to_centroids, num_of_centroids, centroids):
+    index_usr = 0
+    total_error = np.zeros(num_of_centroids)
+    while index_usr < len(Ind):
+        sum_user = np.zeros(num_of_centroids)
+        usr = Ind[index_usr, 0]
+        beginning_index_usr = index_usr
+        for index_mu in range(num_of_centroids):
+            index_usr = beginning_index_usr
+            while index_usr < len(Ind) and (
+                    index_usr == beginning_index_usr or Ind[index_usr, 0] == Ind[index_usr - 1, 0]):
+                mov = Ind[index_usr, 1]
+                sum_user[index_mu] += (X[usr, mov] - centroids[index_mu, mov])**2
+                index_usr += 1
+        best_centroid = np.argmin(sum_user)
+        users_to_centroids[usr] = best_centroid
+        total_error[best_centroid] += np.min(sum_user)
+
+    sum_total_error = np.sum(total_error)
+    return sum_total_error, users_to_centroids
+
 
 def train(list_of_centroids):
     list_of_iter = [25, 25, 25, 25, 22, 20, 18, 16, 14, 12, 10]
@@ -142,7 +141,7 @@ def train(list_of_centroids):
 
     finalMatrix = finalMatrix / len(list_of_centroids)
     np.save("KMeans", finalMatrix)
-    #IOUtil.writeFile(finalMatrix)
+    #IOUtils.writeFile(finalMatrix)
     return errors
 
 
@@ -166,10 +165,11 @@ def main():
     plot_errors(list_of_centroids, errors)
 
 
-num_of_users = 10000
-width = 1000
-X, Ind = IOUtil.initialization()
-Ind = Ind[Ind[:, 0].argsort()]
 
 if __name__ == '__main__':
+    num_of_users = 10000
+    width = 1000
+    X, Ind = IOUtils.initialization()
+    Ind = Ind[Ind[:, 0].argsort()]
+
     main()
