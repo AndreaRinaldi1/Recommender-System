@@ -9,7 +9,7 @@ import IOUtils
 import CV
 	
 
-def Trainautoencoder(Xtrain, Xtrain_mask, Xtest, Xtest_mask, parameters, doPrediction=False, printIntermediateScore=False, outFileName="", nrTest=58847.0):
+def Trainautoencoder(Xtrain, Xtrain_mask, Xtest, Xtest_mask, parameters, doPrediction=False, printIntermediateScore=False, nrTest=58847.0):
 	"""Train function for the autoencoder
 	@param Xtrain, Xtest: normalized train and testing matrices (of size 10000x1000)
 	@param Xtrain_mask, Xtest_mask: the mask corresponding to these matrices.
@@ -23,9 +23,8 @@ def Trainautoencoder(Xtrain, Xtrain_mask, Xtest, Xtest_mask, parameters, doPredi
 	Xtrain = Xtrain.T
 	Xtrain_mask = Xtrain_mask.T
 
-	if doPrediction==False:
-		Xtest = Xtest.T
-		Xtest_mask = Xtest_mask.T
+	Xtest = Xtest.T
+	Xtest_mask = Xtest_mask.T
 
 	nrTrain, nrFeatures = np.shape(Xtrain)
 
@@ -71,24 +70,25 @@ def Trainautoencoder(Xtrain, Xtrain_mask, Xtest, Xtest_mask, parameters, doPredi
 					#early stopping
 					if loss>previousLoss:
 						print("goes up")
-						predictions = model.predict(session, Xtrain)
-						predictions = denormalizeData(predictions)
-						np.save("FullMatrixAuto.npy",predictions.T)
-						#IOUtils.writeFile(predictions.T)
-						print("Predictions made")
-						return
-	
+						if doPrediction:
+							predictions = model.predict(session, Xtrain)
+							predictions = denormalizeData(predictions)
+							np.save("FullMatrixAuto.npy",predictions.T)
+							IOUtil.writeFile(predictions.T)
+							print("Predictions made")
+						return loss
+
 					previousLoss=loss
 					print(previousLoss)
 				else:
 					cost = model.fit(session, XtrainBatch, XtrainBatch_mask)
-
 		if doPrediction:
 			predictions = model.predict(session, Xtrain)
 			predictions = denormalizeData(predictions)
-			#IOUtils.writeFile(predictions.T)
 			np.save("FullMatrixAuto.npy",predictions.T)
+			IOUtil.writeFile(predictions.T)
 			print("Predictions made at the very end")
+			return loss
 					
 
 def normalizeData(X, rangeInf, rangeSup):
@@ -104,15 +104,15 @@ def denormalizeData(X):
 	interp = interp1d([-1,1],[1,5])
 	return interp(X)
 
-def printScoresParameterSearch(XtrainNorm, Xtrain_mask, XvalNorm, Xval_mask):
+def printScoresParameterSearch(XtrainNorm, Xtrain_mask, XvalNorm, Xval_mask, nrTest):
 	parametersFixed={
 		"batchSize" : 11,
 		"epochs" : 40,
-		"hidden_units" : 30,
-		"lr" : 0.001,
-		"lr_decay" : 0.96,
+		"hidden_units" : 40,
+		"lr" : 0.0005,
+		"lr_decay" : 0.9,
 		"hideProb": 0.3,
-		"gaussianPro": 0.0,
+		"gaussianProb": 0.0,
 		"gaussianStd": 0.08,
 		"mmProb": 0.01, 
 		"hiddenFactor": 1.2, 
@@ -124,25 +124,19 @@ def printScoresParameterSearch(XtrainNorm, Xtrain_mask, XvalNorm, Xval_mask):
 
 
 	bounds ={
-		"batchSize" : np.arange(8,20),
-		"hidden_units" : np.arange(10,100,5),
-		"lr" : np.arange(0.0005,0.1,0.001),
-		"lr_decay" : np.arange(0.5,1,0.05),
-		"hideProb" : np.arange(0,0.5,0.1),
-		"gaussianStd" : np.arange(0.01,0.2,0.05),
-		"hiddenFactor" : np.arange(0.1,2,0.1),
-		"visibleFactor" : np.arange(0.1,2,0.1),
-		"regularization" : np.arange(0.1,30,1)
+		"gaussianProb" : np.arange(0.0,0.1,0.01),
+		"hideProb" : np.arange(0.25,0.35,0.01),
+		"mmProb" : np.arange(0,0.1,0.01)  
 	}
 	results={}
 	for key,ran in bounds.items():
 		for paramVal in ran:
 			parameters=parametersFixed
 			parameters[key]=paramVal
-			valScores = Trainautoencoder(XtrainNorm, Xtrain_mask, XvalNorm, Xval_mask, parameters)
+			loss = Trainautoencoder(XtrainNorm, Xtrain_mask, XvalNorm, Xval_mask, parameters, printIntermediateScore=True, nrTest=nrVal)
 			tf.reset_default_graph()
-			minScore = np.min(valScores)
-			results[str(key)+", "+str(paramVal)]=minScore
+			results[str(key)+", "+str(paramVal)]=loss
+			print(loss)
 
 	print(results)
 
@@ -154,13 +148,13 @@ if __name__ == "__main__":
 		"hidden_units" : 40,
 		"lr" : 0.0005,
 		"lr_decay" : 0.89,
-		"hideProb": 0.3,
-		"gaussianProb": 0.0,
+		"hideProb": 0.27,
+		"gaussianProb": 0.07,
 		"gaussianStd": 0.08,
-		"mmProb": 0.01, 
+		"mmProb": 0.06, 
 		"hiddenFactor": 1.2, 
 		"visibleFactor": 0.1, 
-		"regularization": 0.5,
+		"regularization": 0.1,
 	}
 
 	height = 10000
@@ -171,7 +165,8 @@ if __name__ == "__main__":
 	Xtrain, Xval, nrTrain, nrVal = CV.splitNpy(X, height, width, 0.005)
 	XtrainNorm, Xtrain_mask = normalizeData(Xtrain, -1,1)
 	XvalNorm, Xval_mask = normalizeData(Xval, -1,1)
-	Trainautoencoder(XtrainNorm, Xtrain_mask, XvalNorm, Xval_mask, parameters, printIntermediateScore=True, nrTest=nrVal)
+	#printScoresParameterSearch(XtrainNorm, Xtrain_mask, XvalNorm, Xval_mask, nrVal)
+	Trainautoencoder(XtrainNorm, Xtrain_mask, XvalNorm, Xval_mask, parameters, printIntermediateScore=True, nrTest=nrVal, doPrediction=True)
 
 
 
