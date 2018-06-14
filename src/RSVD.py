@@ -7,6 +7,10 @@ import CV
 
 
 def sgd():
+    """
+    computes the stochastic gradient descent of the matrix associating users to latent factors U,
+    the matrix that associates items to latent factors ZT and the biases of users and items.
+    """
     for usr, mov in remaining_values:
         #Compute error
         prediction = get_rating(usr, mov)
@@ -46,8 +50,11 @@ def compute_biases():
 
 
 def fill_matrix():
-    # Each missing value in the initial matrix is filled with the weighted mean for that movie multiplied by the weight of
-    # that user (users that give higher ratings on average, will see higher values)
+    """Each missing value in the initial matrix is filled with the weighted mean
+    for that movie multiplied by the weight of that user
+    (users that give higher ratings on average, will see higher values)
+    return: the filled matrix
+    """
     for i in range(0, len(training_matrix)):
         for j in range(0, len(training_matrix[0])):
             if training_matrix[i, j] == unknown_value:

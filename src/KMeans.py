@@ -7,6 +7,15 @@ import IOUtils
 
 
 def kmeans_algorithm(num_of_centroids, total_number_of_iterations, num_of_samples):
+    """
+    Implements an improved k-means algorithm where the centroids are not sampled
+    randomly at the beginning but they are chosen with probability inversely
+    proportional to the distance of the points from the already created centroids.
+    :param num_of_centroids: number of centroids to create
+    :param total_number_of_iterations: number of times the algo. has to be executed
+    :param num_of_samples: the number of points to take into consideration for the distance from centroids
+    :return: the total error, the final centroids positions and the assignment users-to-centroids
+    """
 
     distinct_users = np.array(list(set(Ind[:, 0])))
     users_to_centroids = np.zeros((len(distinct_users), 2)).astype(int)
@@ -43,6 +52,7 @@ def kmeans_algorithm(num_of_centroids, total_number_of_iterations, num_of_sample
 
         print("Iteration: " + str(num_of_iterations) + ". Error: " + str(sum_total_error))
 
+        #Update the dict that stores the assignment users-to-centroids and viceversa
         centroids_to_users = [[] for i in range(0, num_of_centroids)]
         for k, v in users_to_centroids.items():
             centroids_to_users[v].append(k)
@@ -62,7 +72,11 @@ def kmeans_algorithm(num_of_centroids, total_number_of_iterations, num_of_sample
 
 
 def compute_centroids(users_in_centroid):
-
+    """
+    Update the position of the centroids according to the samples that are in its cluster
+    :param users_in_centroid: the dict storing the map users-to-centroids
+    :return: the update centroid
+    """
     centroid = np.zeros(width)
     total_mask = np.zeros(width)
     for user in users_in_centroid:
@@ -81,6 +95,13 @@ def compute_centroids(users_in_centroid):
 
 
 def compute_initial_centroids(chosen_centroids, num_of_samples):
+    """
+    Computes the initial centroids positions assigning the points a weight that
+    is inversely proportional to their distance from the already existing centroids
+    :param chosen_centroids: already existing centroids
+    :param num_of_samples: the number of points to take into consideration for the distance from centroids
+    :return: a new centroid
+    """
     distances = np.zeros((num_of_users, len(chosen_centroids)))
     for user in range(num_of_users):
         movies = np.where(X[user, :] != 0)
@@ -94,6 +115,14 @@ def compute_initial_centroids(chosen_centroids, num_of_samples):
 
 
 def update_assignments(users_to_centroids, num_of_centroids, centroids):
+    """
+    Update the assignment of samples to the centroids according to the Euclidean distance from them.
+    :param users_to_centroids: dictionary mapping users to centroids
+    :param num_of_centroids: number of centroids
+    :param centroids: centroids positions
+    :return: the total error as summ of the distance of the users to their assigned centroids, and
+            the updated assignment of users to centroids
+    """
     index_usr = 0
     total_error = np.zeros(num_of_centroids)
     while index_usr < len(Ind):
@@ -116,6 +145,11 @@ def update_assignments(users_to_centroids, num_of_centroids, centroids):
 
 
 def train(list_of_centroids):
+    """
+    executes the k-means algorithm for different number of centroids, until the error stops decreasing
+    :param list_of_centroids: the list of number of centroids to try
+    :return: the errors for the different numbers of centroids
+    """
     list_of_iter = [25, 25, 25, 25, 22, 20, 18, 16, 14, 12, 10]
     num_of_samples = [300, 400, 500]
 
