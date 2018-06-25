@@ -8,9 +8,6 @@
 \usepackage{amsfonts}
 \usepackage{caption}
 
-
-
-
 \begin{document}
 \title{Computational Intelligence Laboratory Project}
 
@@ -24,15 +21,16 @@
 
 \begin{abstract}
 
-Recommender Systems are used by big companies such as Netflix and Amazon to perform targeted advertising. A common technique used to design such systems is Collaborative Filtering (CF), which works by analysing data on users' information such as, for example, movies' rating and preferences in terms of items. In this project we implement 7 different models for CF and then combine them using ensemble learning to further improve the results of our predictions. We use Singular Value Decomposition (SVD) and SVD with Stochastic Gradient Descent (SGD) as our baselines and compare our improvements to them. Some of the methods we used includes Bayesian Probabilistic Matrix Factorization (BPMF) and Non-parametric Principal Component Analysis (NPCA). The results are obtained using the provided dataset. %TODO add final improvement of our model wrt the baseline
+Recommender Systems are used by big companies such as Netflix and Amazon to perform targeted advertising. A common technique used to design such systems is Collaborative Filtering (CF), which works by analysing data on users' information such as, for example, movies' rating and preferences in terms of items. In this project we implement 7 different models for CF and then combine them using ensemble learning to further improve the results of our predictions. We use Singular Value Decomposition (SVD) and Matrix Factorization with Stochastic Gradient Descent (MF with SGD) as our baselines and compare our improvements to them. Some of the methods we used includes Bayesian Probabilistic Matrix Factorization (BPMF) and Non-parametric Principal Component Analysis (NPCA). The results are obtained using the provided dataset from Kaggle.
 
 \end{abstract}
 
 \section{Introduction}
 \label{int}
 
-Recommender systems are used in multiple situations in today's Internet. They can be found in e-commerce applications to recommend items to purchase, or in on-line video streaming to give advice on which movie to watch next. An example of companies using these systems are Netflix and Amazon. These types of companies are confronted with millions of users and items. This gives rise to the need of having a recommender system which is both reliable and efficient, while dealing with an increasing amount of data. A common technique to design recommender systems is collaborative filtering. This technique uses a user's past behaviour (preferences, ratings, ...) to make predictions. Common approaches in collaborative filtering are memory based techniques such as user-based, measuring the similarity between a given user and other users, and item-based, which measures the similarity between the selected item and other ones. Other types of CF are model-based techniques such as PCA and SVD. These different methods have widely been studied during the past years and all come with their strengths and limitations. To overcome such weaknesses, a hybrid approach is often used in order to combine multiple models. This allows the recommender system to benefit from the pros of different techniques while minimizing the limitations of each one of them.\\
-In this paper we use this third approach to implement our own recommender system. We use 7 different models and then combine all of them in a hybrid one using \textbf{M}ulti \textbf{L}ayer \textbf{P}erceptron (MLP) and Ridge regressions. .\\
+Recommender systems are used in multiple situations in today's Internet. They can be found in e-commerce applications to recommend items to purchase, or in on-line video streaming to give advice on which movie to watch next. An example of companies using these systems are Netflix and Amazon. These types of companies are confronted with millions of users and items which gives rise to the need of having a recommender system which is both reliable and efficient, while dealing with an increasing amount of data. A common technique to design recommender systems is collaborative filtering. This technique uses a user's past behaviour (preferences, ratings, ...) to make predictions which allows to build a sparse user-item matrix of ratings.\\
+Common approaches in collaborative filtering are so called memory based techniques such as user-based or item-based, that measure the similarity between a given user and the other users, respecitvely a given item and the other ones, to predict the missing ratings. Other types of CF methods are model-based techniques such as PCA and SVD, and often use a matrix factorization approach to predict the missing entries. These different methods have widely been studied during the past years and all come with their strengths and limitations. To overcome such weaknesses, a hybrid approach is often used in order to combine multiple models. This allows the recommender system to benefit from the pros of different techniques while minimizing the limitations of each one of them.\\
+In this paper we implement 7 different models which separately predict the missing entries, and then combine the individual predictions using Ridge Regression or \textbf{M}ulti \textbf{L}ayer \textbf{P}erceptron (MLP).\\
 Our paper is structured as follows: in \emph{Section \ref{mam}} we present the mathematical description of the models and give some details about their implementations. In \emph{Section \ref{res}} we show the results obtained by performing prediction with our approach, and we discuss these results in \emph{Section \ref{disc}}. We conclude our paper in \emph{Section \ref{conc}}.
 
 \section{Models and Methods}
@@ -42,7 +40,7 @@ In this section we describe the problem we are tackling as well as the models we
 
 \subsection{Problem Description}
 
-We are given a dataset of 10000 users and 1000 movies. Our goal is to predict the rating $r_{ij}$ given by user $i$ to the $j$-th movie. All ratings are integer numbers between 1 and 5. The evaluation of the predictions is done according to the \textbf{R}oot \textbf{M}ean \textbf{S}quared \textbf{E}rror (RMSE), which is defined as:
+We are given a dataset of 10000 users and 1000 movies with 11.76\% of rating density. Our goal is to predict the missing rating $r_{ij}$ given by user $i$ to the $j$-th movie. All ratings are integer numbers between 1 and 5. The evaluation of the predictions is done according to the \textbf{R}oot \textbf{M}ean \textbf{S}quared \textbf{E}rror (RMSE), which is defined as:
 
 $$
 RMSE = \sqrt{\frac{1}{\vert N \vert} \sum_{(i,j)\in N} (r_{ij} - \hat{r}_{ij}})^2
@@ -57,8 +55,7 @@ $$
 \begin{description}
 
 \item[\emph{Item-based with Pearson}]\ \\
-This method uses similarity between items' ratings to recommend items to the target user. As a measure of similarity we use Pearson's correlation, which is defined as follows [Paper]:
-
+This method uses similarity between items' ratings to recommend items to the target user. As a measure of similarity we use Pearson's correlation, which is defined as follows \cite{Sarwar:2001:ICF:371920.372071}:
 $$
 sim_p(i, j) = \frac{\sum_{u \in U} (r_{i,u} - \bar{r_i})(r_{j,u} - \bar{r_j})}{\sqrt{\sum_{u \in U} (r_{i,u} - \bar{r_i})^2}	\sqrt{\sum_{u \in U} (r_{j,u} - \bar{r_j})^2}}
 $$
@@ -71,7 +68,7 @@ $$
 $$ 
 
 \item[\emph{Regularized SVD}]\ \\
-This method combines SVD with regularized SGD to make predictions on users' ratings. The data matrix is first decomposed into two matrices $\textbf{U} = \left[ u_i \right]$ and $\textbf{V} = \left[ v_j \right]$ representing the user and item latent feature matrices where $u_i,v_j \in \mathbb{R}^k$. The predicted rating is then given by $\hat{r}_{ij} = u_i^Tv_j$. We then use SGD with regularization to estimate $u$ and $v$ as follows [Paterek paper]:
+This method combines SVD with regularized SGD to make predictions on users' ratings. The data matrix is first decomposed into two matrices $\textbf{U} = \left[ u_i \right]$ and $\textbf{V} = \left[ v_j \right]$ representing the user and item latent feature matrices where $u_i,v_j \in \mathbb{R}^k$. The predicted rating is then given by $\hat{r}_{ij} = u_i^Tv_j$. We then use SGD with regularization to estimate $u$ and $v$ as follows \cite{paterek}:
 
 $$
 \begin{aligned}
@@ -81,11 +78,9 @@ $$
 \end{aligned}
 $$
 
-\noindent where $e_{ij}$ is the error between the true rating $r_{ij}$ and the predicted one $\hat{r_{ij}}$, $\eta$ is the learning rate and $\lambda$ is the regularization term.
-
-
+\noindent where $e_{ij}$ is the error between the true rating $r_{ij}$ and the predicted one $\hat{r_{ij}}$, $\eta$ is the learning rate and $\lambda$ is the regularization term. In the results, we will result to this method as RSVD.
 \item[\emph{Post-processing SVD with Kernel Ridge Regression}] \ \\
-This method combines ridge regression with the kernel trick to improve SVD. To do that, the $u_{ik}$ weights are discarded and the $v_{jk}$ are used as predictors. Defining $y$ as the vector of movies rated by user $i$ and $X$ as the matrix of observation, the prediction of $y$ by ridge regression is given by [Paterek paper]:
+This method combines ridge regression with the kernel trick to improve SVD. To do that, the $u_{ik}$ weights are discarded and the $v_{jk}$ are used as predictors. Defining $y$ as the vector of movies rated by user $i$ and $X$ as the matrix of observation, the prediction of $y$ by ridge regression is given by \cite{paterek}:
 
 $$
 \hat{y}_i = x_i^T(X^TX + \lambda I)^{-1}X^Ty
@@ -97,11 +92,11 @@ $$
 \hat{y}_i = K(x_i^T,X)(K(X,X) + \lambda I)^{-1}y
 $$
 
-\noindent where $K$ is, in our case, a Gaussian kernel defined as $K(x_i^T, x_j^T) = \exp(2(x_i^Tx_j-1))$ and $\lambda = .7$.
+\noindent where $K$ is, in our case, a Gaussian kernel defined as $K(x_i^T, x_j^T) = \exp(2(x_i^Tx_j-1))$ and $\lambda = .7$. In the results, we will refer to this method as Ridge SVD.
  
  
 \item[\emph{k-means}]\ \\
-The k-means algorithm is used in collaborative filtering to divide users into $K$ clusters $C_k$ and minimizing the intra-cluster variance, defined as [Paterek paper]:
+The k-means algorithm is used in collaborative filtering to divide users into $K$ clusters $C_k$ and minimizing the intra-cluster variance, defined as \cite{paterek}:
 
 $$
 \sum_{k=1}^K \sum_{i \in C_k} \Vert y_i - \mu_k \Vert^2 = \sum_{k=1}^K \sum_{i \in C_k} \sum_{j \in J_i} (y_{ij} - \mu_{kj})^2
@@ -158,7 +153,7 @@ $$
 \end{figure} 
 
 \item[Autoencoder] \ \\
-An autoencoder provides a method to lean a non-linear mapping from $\mathbb{R}^{m}$ to $\mathbb{R}^{m}$. As shown in \cite{autorec}, this neural network can be adapted to the problem of collaborative filtering determined by a user-item rating matrx $M \times N$, by using each partially observed item vector $I_{i} \in {R}^{m} , i \in \{1,...n\}$ (\emph{Figure \ref{autoenc}}).
+An autoencoder provides a method to learn a non-linear mapping from $\mathbb{R}^{m}$ to $\mathbb{R}^{m}$. As shown in \cite{autorec}, this neural network can be adapted to the problem of collaborative filtering determined by a user-item rating matrx $M \times N$, by using each partially observed item vector $I_{i} \in {R}^{m} , i \in \{1,...n\}$ (\emph{Figure \ref{autoenc}}).
 
 \begin{figure}[t!]
 \centering
@@ -177,11 +172,12 @@ where $\widetilde{x}$ is the corrupted version of $x$ and $nn(\widetilde{x}_j)$ 
 \newline
 Additionaly to adding L2-regularization terms for the network weights, we corrupt the input further as suggested in \cite{Vincent:2010:SDA:1756006.1953039}. Before hidding some part of the input, we first add random gaussian noise and what the authors call "salt and pepper" noise, which consists of randomly putting some elements to the minimum rating and some to the maximum rating.
 \newline 
-Finally, we also tested the possibility to add more layers to the autoencoder to learn more complex features as proposed in \cite{Kuchaiev2017TrainingDA}. 
+Finally, we also tested the possibility to add more layers to the autoencoder to learn more complex features as proposed in \cite{Kuchaiev2017TrainingDA}, but which didn't improve the predictions.
 
 \end{description}
 
 \subsection{Ensemble}
+
 The performance of an invidual model can depend on multiple factors like the size of the rating matrix, its sparsity and other non-obvious parameters \cite{comparative}. 
 To be able to combine the strength of each individual model, we determined the optimal linear combination of the predictions made by these models on a validation set. 
 \[
@@ -206,20 +202,12 @@ To be able to combine the strength of each individual model, we determined the o
 \]
 where the d predictions of the m models are linearly combined. We also added a L2-regularization term to avoid overfitting on the validation set. 
 \newline
-We also combined the features using a Multi Layer Perceptron, using the rows of the above left matrix as training input. Due to the complexity of this model, the variance had to be generously regularized. 
+We also tried to combine the features using a Multi Layer Perceptron, using the rows of the above left matrix as training input. Due to the complexity of this model, the variance had to be generously regularized. 
 \newline
 The results have been showing that it was essential to keep a small part of the training data exclusively for model combining so that the trained models can be combined over true validation data.  
 
 \section{Evaluation}
 \label{res}
-
-\subsection{Set-up}
-
-Our dataset comprises 10000 users and 1000 movies. The results are computed by submitting the predictions to the Kaggle platform, which, as mentioned in \emph{Problem Description}, evaluates the prediction error via RMSE.
-
-\subsection{Results}
-
-We present the results of single models in \emph{Table \ref{tabres}} and of the two types of ensemble methods in \emph{Table \ref{ensres}}. We discuss them in the following section.
 
 \begin{table}[h!]
 	\centering
@@ -227,14 +215,15 @@ We present the results of single models in \emph{Table \ref{tabres}} and of the 
 		\textit{\textbf{Model}} & \textit{\textbf{RMSE}} \\
 		\hline
 		SVD                     &       1.00468                 \\
-		SVD + SGD               &                        \\
-		RSVD       	            &        0.98787                \\
-		Ridge SVD               &        1.0264                \\
-		Item-Based              &        1.05                \\
+		MF with SGD             &       1.02303                 \\
+		\hline	
 		k-means                 &        1.06                \\
+		Item-Based              &        1.05                \\
+		Ridge SVD               &        1.0264                \\
+		AutoEncoder             &        0.99782               \\
 		BPMF                    &        0.99355               \\
-		NPCA                    &        0.98574          \\
-		AutoEncoder             &        0.99782              
+		RSVD       	            &        0.98787                \\
+		NPCA                    &        0.98574                      
 	\end{tabular}
 \caption{Results of our models' evaluation}
 \label{tabres}
@@ -252,45 +241,25 @@ We present the results of single models in \emph{Table \ref{tabres}} and of the 
 \label{ensres}
 \end{table}
 
+The results of the individual models are presented in \emph{Table \ref{tabres}}.
+The two simple baseline models, which are both model-based matrix factorization models, both outperform the memory based models by at least 2.6\%. On the other hand, all the other improved matrix factorization methods except the regularized SGD, increase the RMSE by at least 1.11\%. By simply adding regularization to SVD with SGD, we outperformed all of our models except NPCA, which led to the best individual model score.
+\\
+The results of the ensemble on the individual models using MLP or Ridge Regression are presented in \emph{Table \ref{ensres}}. Both of them led to an improvement of at least 1.07\% compared to our best model, and Ridge regession showed to work best on our models and this dataset with an RMSE of 0.97331.
+
 \section{Discussion}
 \label{disc}
 
-\emph{Table \ref{tabres}} shows the results obtained by evaluation of each single model submitting the predictions to the Kaggle system. As can be seen, the best result in terms of RMSE on the given dataset is obtained applying NPCA with a score of 0.98574, meaning an improvement of 1.89\% with respect to the baseline (TODO CHECK BASELINES VALUES), while the worst is obtained by k-means with a score of 1.06, which corresponds to a deterioration of 5.51\%. However, as mentioned in both \emph{Section \ref{int}} and \emph{Section \ref{mam}}, individual models can have several limitations and thus, to overcome this factor, we implemented and evaluated two types of ensemble models. The results of such models are represented in \emph{Table \ref{ensres}}. As can be seen, ensemble with MLP regressor scored a RMSE value of 0.97518, corresponding to an improvement of 2.94\% with respect to the baseline, of 8\% to the worst model (\emph{i.e.}, k-means) and of 1.07\% to the best individual model (\emph{i.e.}, NPCA). Using Ridge regression, we could lower even further the results scoring a value of 0.97331, meaning a further enhancement of 0.19\% with respect to the MLP ensemble. Comparing the best result to individual models, we have an improvement of 3.12\%, 8.18\% and 1.26\% with respect to the baseline, k-means and the NPCA models respectively. We further summarize these findings in \emph{Table \ref{sumtab}} and \emph{Table \ref{enssum}}.
+While it is not posible to fully assess the efficiency of the different methods when tested on a single dataset, there are still some relevant comments that can be made. 
+As proposed in \cite{comparative}, matrix factorization based methods tend to be in general more accurate with increasing number of users. Our dataset consisting of 10000 users, this assumption is confirmed for our experiments, with a clear gap between memory-based and MF models. However, memory based methods are able to take in account specifities of the dataset that the matrix factorization methods aren't: if the predictions of the k-means algorithm and the item-based model are discarded for the Ridge Regression ensemble, the RMSE slightly increases from 0.97331 to 0.97350. On datasets where the memory-based methods are individually more accurate, we could expect this number to increase significantly more.\\
+Despite the rise of machine learning based methods in many other research domains, the autoencoder hasn't shown as promising results as expected. In fact, when the AutoEncoder predictions are discarded when combining the models using Ridge Regression, the RMSE stays constant, which means that the AutoEncoder doesn't bring new insights comapred to the other models. Despite many tricks applied to the AutoEncoder such as adding different noise types and loss functions, the accuracy of the predictions is very dependent on the parameters and can thus quickly become less precise than expected. Also, as shown in \cite{Kuchaiev2017TrainingDA}, an autoencoder is nothing else than some matrix factorization, thanks to the few units on the hidden layer.\\
+We have also shown that combining the models with a linear Ridge Regression significantly outperformed any of the individual models. Even if it is unclear at this state of the research how an individual model will perform on a given dataset \cite{comparative}, our results clearly show that each of them have strengths and limitations and that the strengths can easily be combined using the individual predictions. Finally, using an MLP to combine predicitions from 7 different sources didn't decrease the final RMSE. The model complexity led to overfitting on the validation set and thus the MLP ensemble prediction didn't score as well on the Kaggle test set.
 
-\begin{table}[h!] 
-	\centering
-	\begin{tabular}{l|c|c}
-		\textit{\textbf{Individual Model}} & \textit{\textbf{MLPE Improvement}} & \textit{\textbf{RRE Improvement}} \\
-		\hline
-		SVD                     &       2.94\%     &     3.12\%         \\
-		SVD + SGD               &                 &      				 \\
-		RSVD       	            &        1.28\%  &     1.47\%         		\\
-		Ridge SVD               &        4.99\%   &    5.17\%         		\\
-		Item-Based              &        7.13\%     &   7.3\%        		\\
-		k-means                 &        8.00\%     &  8.18\%         		\\
-		BPMF                    &        1.85\%  &     2.04\%        \\
-		NPCA                    &        1.07\%   &    1.26\%   				\\
-		AutoEncoder             &        2.27\%    &   2.46\%        
-	\end{tabular}
-    \caption{Summary of the improvements achieved using ensemble models}
-    \label{sumtab}
-\end{table}
 
-\begin{table}[h!]
-	\centering
-	\begin{tabular}{l|c}
-		\textit{\textbf{Ensemble}} & \textit{\textbf{RRE Improvement}} \\
-		\hline
-		MLP                     &      0.19\%                 \\                              
-	\end{tabular}
-\caption{Improvement of RR over MLP ensemble.}
-\label{enssum}
-\end{table}
 
-\section{Conclusions}
+\section{Conclusion}
 \label{conc}
 
-In this work we implemented and evaluated different Collaborative Filtering techniques to build reliable and efficient Recommender Systems. We first implemented 7 different individual models based on different papers and submitted their predictions to the Kaggle system to be able to compare their performances in terms of the Root Mean Squared Error, and analyse their strengths and limitations. To further improve the predictions, we implemented and tested two different types of ensemble models, the first using a Multi-Layer Perceptron and the second using Ridge Regression. Analysing both methods' predictions, we concluded that the latter was the best model in our situation. By using this approach, we were able to further enhance our results achieving a final score of 0.97331, corresponding to a final improvement of 1.26\% over our best individual model (NPCA), of 8.18\% with respect to the worst model (k-means), and of 0.19\% with respect to the first ensemble model.
+In this work we implemented and evaluated different Collaborative Filtering techniques to build reliable and efficient Recommender Systems. We first implemented 7 different individual models based on different papers and submitted their predictions to the Kaggle system to be able to compare their performances in terms of the Root Mean Squared Error, and analyse their strengths and limitations. To further improve the predictions, we implemented and tested two different types of ensemble models, the first using a Multi-Layer Perceptron and the second using Ridge Regression. Analysing both methods' predictions, we concluded that the latter was the best model in our situation. By using this approach, we were able to further enhance our results achieving a final score of 0.97331, corresponding to a final improvement of 4.972 \% compared to the best baseline and 1.26\% over our best individual model (NPCA).
 
 
 \bibliographystyle{IEEEtran}
