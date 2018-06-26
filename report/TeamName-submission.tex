@@ -9,11 +9,11 @@
 \usepackage{caption}
 
 \begin{document}
-\title{Computational Intelligence Laboratory Project}
+\title{An Ensemble of stacked models for Collaborative Filtering}
 
 \author{
   Andrea Rinaldi, Simon Haefeli, Giuseppe Russo, Gianni Perlini\\
-  Group Name: Team Name \\
+  Kaggle Group Name: Team Name \\
   Department of Computer Science, ETH Zurich, Switzerland
 }
 
@@ -21,16 +21,16 @@
 
 \begin{abstract}
 
-Recommender Systems are used by big companies such as Netflix and Amazon to perform targeted advertising. A common technique used to design such systems is Collaborative Filtering (CF), which works by analysing data on users' information such as, for example, movies' rating and preferences in terms of items. In this project we implement 7 different models for CF and then combine them using ensemble learning to further improve the results of our predictions. We use Singular Value Decomposition (SVD) and Matrix Factorization with Stochastic Gradient Descent (MF with SGD) as our baselines and compare our improvements to them. Some of the methods we used includes Bayesian Probabilistic Matrix Factorization (BPMF) and Non-parametric Principal Component Analysis (NPCA). The results are obtained using the provided dataset from Kaggle.
+Recommender Systems are used by tech companies such as Netflix and Amazon to perform targeted advertising. A common technique used to design such systems is Collaborative Filtering (CF), which works by analysing data on users' information such as, for example, movies' ratings and items preferences in general. In this project we implement 7 different models for CF and then combine them using ensemble learning to further improve the results of our predictions. We use Singular Value Decomposition (SVD) and Matrix Factorization with Stochastic Gradient Descent (MF with SGD) as our baselines and compare our improvements over them. Some of the methods we used includes Bayesian Probabilistic Matrix Factorization (BPMF) and Non-parametric Principal Component Analysis (NPCA). The results are obtained using the provided dataset from Kaggle.
 
 \end{abstract}
 
 \section{Introduction}
 \label{int}
 
-Recommender systems are used in multiple situations in today's Internet. They can be found in e-commerce applications to recommend items to purchase, or in on-line video streaming to give advice on which movie to watch next. An example of companies using these systems are Netflix and Amazon. These types of companies are confronted with millions of users and items which gives rise to the need of having a recommender system which is both reliable and efficient, while dealing with an increasing amount of data. A common technique to design recommender systems is collaborative filtering. This technique uses a user's past behaviour (preferences, ratings, ...) to make predictions which allows to build a sparse user-item matrix of ratings.\\
-Common approaches in collaborative filtering are so called memory based techniques such as user-based or item-based, that measure the similarity between a given user and the other users, respecitvely a given item and the other ones, to predict the missing ratings. Other types of CF methods are model-based techniques such as PCA and SVD, and often use a matrix factorization approach to predict the missing entries. These different methods have widely been studied during the past years and all come with their strengths and limitations. To overcome such weaknesses, a hybrid approach is often used in order to combine multiple models. This allows the recommender system to benefit from the pros of different techniques while minimizing the limitations of each one of them.\\
-In this paper we implement 7 different models which separately predict the missing entries, and then combine the individual predictions using Ridge Regression or \textbf{M}ulti \textbf{L}ayer \textbf{P}erceptron (MLP).\\
+Recommender systems are used in multiple situations in today's Internet, mainly for commercial purposes. They can be found in e-commerce applications to recommend items to purchase, or in on-line video streaming to give advice on which movie to watch next. An example of companies using these systems are Netflix and Amazon. These types of companies are confronted with millions of users and items which gives rise to the need of having a recommender system which is both reliable and efficient, while dealing with an increasing amount of data. A common technique to design recommender systems is collaborative filtering. This technique uses users' past behaviour (preferences, ratings, ...) to make predictions about what they could be interested in.\\
+Common approaches in collaborative filtering are so called memory based techniques such as user-based or item-based, that measure the similarity between a given user and the other users, respecitvely a given item and the other ones, to predict the missing ratings. Other types of CF methods are model-based techniques such as PCA and SVD, and often use a matrix factorization approach to predict the missing entries. These different methods have widely been studied during the past years and all come with their strengths and limitations. To overcome such weaknesses, a hybrid approach is often used in order to combine multiple models. This allows the recommender system to benefit from the advantages of different techniques while minimizing their individual limitations.\\
+In this paper we implement 7 different models which separately predict the missing entries, and then combine the predictions from each model using Ridge Regression or \textbf{M}ulti \textbf{L}ayer \textbf{P}erceptron (MLP).\\
 Our paper is structured as follows: in \emph{Section \ref{mam}} we present the mathematical description of the models and give some details about their implementations. In \emph{Section \ref{res}} we show the results obtained by performing prediction with our approach, and we discuss these results in \emph{Section \ref{disc}}. We conclude our paper in \emph{Section \ref{conc}}.
 
 \section{Models and Methods}
@@ -40,7 +40,7 @@ In this section we describe the problem we are tackling as well as the models we
 
 \subsection{Problem Description}
 
-We are given a dataset of 10000 users and 1000 movies with 11.76\% of rating density. Our goal is to predict the missing rating $r_{ij}$ given by user $i$ to the $j$-th movie. All ratings are integer numbers between 1 and 5. The evaluation of the predictions is done according to the \textbf{R}oot \textbf{M}ean \textbf{S}quared \textbf{E}rror (RMSE), which is defined as:
+We are given a dataset of 10000 users and 1000 items with 11.76\% of rating density. Our goal is to predict the missing rating $r_{ij}$ given by user $i$ to the $j$-th movie. All ratings are integer numbers between 1 and 5. The evaluation of the predictions is done according to the \textbf{R}oot \textbf{M}ean \textbf{S}quared \textbf{E}rror (RMSE), which is defined as:
 
 $$
 RMSE = \sqrt{\frac{1}{\vert N \vert} \sum_{(i,j)\in N} (r_{ij} - \hat{r}_{ij}})^2
@@ -55,32 +55,35 @@ $$
 \begin{description}
 
 \item[\emph{Item-based with Pearson}]\ \\
-This method uses similarity between items' ratings to recommend items to the target user. As a measure of similarity we use Pearson's correlation, which is defined as follows \cite{Sarwar:2001:ICF:371920.372071}:
+This method uses similarity between items' ratings to recommend items to the target user. As a measure of similarity we use Pearson's correlation, which is defined \cite{Sarwar:2001:ICF:371920.372071} as follows :
 $$
 sim_p(i, j) = \frac{\sum_{u \in U} (r_{i,u} - \bar{r_i})(r_{j,u} - \bar{r_j})}{\sqrt{\sum_{u \in U} (r_{i,u} - \bar{r_i})^2}	\sqrt{\sum_{u \in U} (r_{j,u} - \bar{r_j})^2}}
 $$
 
-where $U$ represents the set of items that have been rated by both users $i$ and $j$, and $\bar{r_i}$ (resp. $\bar{r_j}$) is the average over the ratings of user $i$ (resp. $j$). The result is a value comprised in $[-1;1]$. A -1 indicates that the ratings of the considered users are opposite, while a result of 1 indicates that they are similar. A value of 0 means that the two ratings seems to be independent. \\
-Once we have the similarity coefficients, the predicted rating is calculated as follows:
+where $U$ represents the set of users that rated both item $i$ and $j$, and $\bar{r_i}$ (resp. $\bar{r_j}$) is the average rating of item $i$ (resp. $j$). The result is a value comprised in the interval $[-1;1]$, where +1 indicates maximum similarity between the items while a value of 0 means that the two ratings seems to be independent. \\
+Once we have the similarity coefficients, we compute the prediction on an item $i$ for user $u$ by computing the sum of the ratings given by the user on the items similar to $i$. Each rating is weighted by the corresponding similarity $s_{i,j}$ between items $i$ and $j$. Formally:
 
 $$
-\hat{r_{iu}} = \frac{\sum_{s \in S_u} (sim_p(s, i) \ast r_{si} )}{\sum_{s \in S_u} \vert sim_p(s, i) \vert}
+\hat{r_{i,u}} = \frac{\sum_{j \in I_i} (sim_p(i, j) \ast r_{u,j} )}{\sum_{j \in I_i} \vert sim_p(i, j) \vert}
 $$ 
 
+where $I_i$ represents the set of items similar to item $i$.
 \item[\emph{Regularized SVD}]\ \\
-This method combines SVD with regularized SGD to make predictions on users' ratings. The data matrix is first decomposed into two matrices $\textbf{U} = \left[ u_i \right]$ and $\textbf{V} = \left[ v_j \right]$ representing the user and item latent feature matrices where $u_i,v_j \in \mathbb{R}^k$. The predicted rating is then given by $\hat{r}_{ij} = u_i^Tv_j$. We then use SGD with regularization to estimate $u$ and $v$ as follows \cite{paterek}:
+This method combines SVD with regularized SGD to make predictions on users' ratings. The data matrix is first decomposed into two matrices $\textbf{U} = \left[ u_i \right]$ and $\textbf{V} = \left[ v_j \right]$ representing the user and item latent feature matrices where $u_i,v_j \in \mathbb{R}^k$. The predicted rating is then given by $\hat{r}_{ij} = u_i^Tv_j + p_i + q_j$ where $p_i$ and $q_j$ are the biases of user $i$ and item $j$ respectively. We then use SGD with regularization \cite{paterek} to estimate $u$ and $v$ as follows :
 
 $$
 \begin{aligned}
 & e_{ij} = r_{ij} - \hat{r}_{ij} \\
 & u_{ik} += \eta \ast (e_{ij}v_{jk} - \lambda u_{ik}) \\
-& v_{jk} += \eta \ast (e_{ij}u_{ik} - \lambda v_{jk})
+& v_{jk} += \eta \ast (e_{ij}u_{ik} - \lambda v_{jk}) \\
+& p_{i} += \eta  \ast (e_{ij} - \gamma (u_i + v_j - b)) \\
+& q_{j} += \eta  \ast (e_{ij} - \gamma (u_i + v_j - b))
 \end{aligned}
 $$
 
-\noindent where $e_{ij}$ is the error between the true rating $r_{ij}$ and the predicted one $\hat{r_{ij}}$, $\eta$ is the learning rate and $\lambda$ is the regularization term. In the results, we will result to this method as RSVD.
+\noindent where $e_{ij}$ is the error between the true rating $r_{ij}$ and the predicted one $\hat{r_{ij}}$, $\eta$ is the learning rate, $\lambda$ is the regularization term for $u$ and $v$, $\gamma$ is the regularizer for the biases and b is the global bias. After having tried different combinations for $\lambda$, $\gamma$ and the number of latent facators ($k$), we achieved the best score on the validation set with $k = 12$, $\lambda = 0.05$ and $\gamma = 0.15$. In the results, we will refer to this method as RSVD.
 \item[\emph{Post-processing SVD with Kernel Ridge Regression}] \ \\
-This method combines ridge regression with the kernel trick to improve SVD. To do that, the $u_{ik}$ weights are discarded and the $v_{jk}$ are used as predictors. Defining $y$ as the vector of movies rated by user $i$ and $X$ as the matrix of observation, the prediction of $y$ by ridge regression is given by \cite{paterek}:
+This method combines Ridge regression with the kernel trick to improve SVD  \cite{paterek}. To do that, the $u_{ik}$ weights are discarded and the $v_{jk}$ are used as predictors. Defining $y$ as the vector of movies rated by user $i$ and let $X$ be a matrix of observations - each row of $X$ is normalized vector of features of one movie $j$ rated by user $i$: $x_j = \frac{v_j}{\Vert v_j \Vert}$. The prediction of $y$ by ridge regression is given by	:
 
 $$
 \hat{y}_i = x_i^T(X^TX + \lambda I)^{-1}X^Ty
@@ -95,8 +98,8 @@ $$
 \noindent where $K$ is, in our case, a Gaussian kernel defined as $K(x_i^T, x_j^T) = \exp(2(x_i^Tx_j-1))$ and $\lambda = .7$. In the results, we will refer to this method as Ridge SVD.
  
  
-\item[\emph{k-means}]\ \\
-The k-means algorithm is used in collaborative filtering to divide users into $K$ clusters $C_k$ and minimizing the intra-cluster variance, defined as \cite{paterek}:
+\item[\emph{K-means++}]\ \\
+We implement an improved version of the vanilla k-means algorithm, performing an improved initialization algorithm for the cluster centroids. The intuition behind this approach is that spreading out the k initial cluster centers is a good thing: the first cluster center is chosen uniformly at random from the data points that are being clustered, after which each subsequent cluster center is chosen from the remaining data points with probability proportional to its squared distance from the point's closest existing cluster center. For this particular application (CF), the k-means algorithm is used to divide users into $K$ clusters $C_k$ and minimizing the intra-cluster variance, defined in \cite{paterek} as:
 
 $$
 \sum_{k=1}^K \sum_{i \in C_k} \Vert y_i - \mu_k \Vert^2 = \sum_{k=1}^K \sum_{i \in C_k} \sum_{j \in J_i} (y_{ij} - \mu_{kj})^2
@@ -104,13 +107,7 @@ $$
 
 \noindent where $J_i$ is the set of movies rated by user $i$ and $\mu_{kj}$ is the prediction for rating of each user in $C_k$ given to movie $j$.
 
-%The k-means method is used for clustering n data points into k clusters. We use this method to partition the set of users into k clusters. The objective we want to minimize is defined as follows:
-
-%$$ 
-%\sum_{i=1}^N \sum_{j=1}^K (z_{ij} \Vert \textbf{r}_i - \textbf{u}_j \Vert^2) 
-%$$
-
-%\noindent where $z_{ij}$ indicates whether user $i$ is in cluster $j$ or not, $\Vert \textbf{r}_i - \textbf{u}_j \Vert^2)$ is computed for all movies rated by user $i$, with $\textbf{r}_i$ being the actual rating and $\textbf{u}_j$ the predicted one.	
+We performed the k-means algorithm for different numbers of clusters, from 4 to 24 with an inerval step of 2. Lastly, since the error in these configuarations decreases almost linearly, without a clearly noticeable "knee" in the error plot, we decided to use as predictions, the mean of the predictions across the aforementioned configurations.
 
 \item[\emph{BPMF}] \ \\
 This method aims at improving Probabilistic Matrix Factorization techniques by taking a Bayesian approach, and is described in \cite{BPMF}. In traditional probabilistic matrix factorization the user-specific and movie-specific latent feature matrices $U$ and $V$ are assumed to be Gaussian with mean 0 and covariance $\alpha^{-1} I$, where $\alpha$ is a precision factor.  
@@ -263,5 +260,5 @@ In this work we implemented and evaluated different Collaborative Filtering tech
 
 
 \bibliographystyle{IEEEtran}
-\bibliography{biblio}
+\bibliography{TeamName-literature}
 \end{document}
