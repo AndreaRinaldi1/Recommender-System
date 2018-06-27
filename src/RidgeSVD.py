@@ -8,11 +8,11 @@ import IOUtils
 def RidgePostProcessing():
     A, Ind = IOUtils.initialization()
 
-    final = np.load("../results/RSVD.npy")
+    final = np.load("../../CIL_results/results/RSVD.npy")
 
     for row, col in Ind:
         final[row, col] = A[row, col]
-    factor = 5
+    factor = 12
     U, s, ZT = np.linalg.svd(final, full_matrices=True)
     D = np.diag(s[:factor])
     U = np.matmul(U[:, :factor], np.sqrt(D))
