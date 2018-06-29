@@ -37,8 +37,6 @@ def splitNpy(X, height, width, splitPercentage):
 	ids = np.empty(np.shape(nonzeros[0])[0], dtype="U12") 
 	predictions = np.empty(np.shape(nonzeros[0])[0], dtype="i")
 	for i in range(np.shape(nonzeros[0])[0]):
-		if(i%100000 == 0):
-			print(i)
 		h = nonzeros[0][i]
 		w = nonzeros[1][i]
 		idString = "r"+str(h+1)+"_c"+str(w+1)
