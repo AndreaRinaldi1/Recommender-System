@@ -7,6 +7,7 @@ from sklearn.neural_network import MLPRegressor
 from sklearn.linear_model import Ridge
 import IOUtils
 
+path="../../CIL_results/results/"
 
 def ensemble(known_ids, idsToWrite):
 	"""
@@ -18,8 +19,6 @@ def ensemble(known_ids, idsToWrite):
 	:param idsToWrite: the indices the ensemble model has to predict the ratings of.
 	:return: the train matrix, the prediction matrix and the list of weights of the samples
 	"""
-
-	path = "../../CIL_results/results/"
 	files = [f for f in listdir(path) if isfile(join(path, f))]
 
 	nrFiles = 0
@@ -92,6 +91,8 @@ def getModelBias():
 			'KMeans.npy': (1/1.06)**exp, 'Autoencoder.npy': (1/0.996)**exp}
 
 
+
+
 def getIdsToWrite():
 	"""
 	Returns the indices of the predictions to write to csv for evaluation.
@@ -129,8 +130,6 @@ def main():
 	final_prediction = regression(train_matrix, pred_matrix, groundT, weights)
 	final_prediction = np.clip(final_prediction, 1, 5)
 	IOUtils.writeFileEnsemble(final_prediction)
-
-
 
 if __name__ == '__main__':
 	main()
