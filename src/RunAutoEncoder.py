@@ -74,7 +74,7 @@ def Trainautoencoder(Xtrain, Xtrain_mask, Xtest, Xtest_mask, parameters, doPredi
 							predictions = model.predict(session, Xtrain)
 							predictions = denormalizeData(predictions)
 							np.save("FullMatrixAuto.npy",predictions.T)
-							IOUtil.writeFile(predictions.T)
+							#IOUtil.writeFile(predictions.T)
 							print("Predictions made")
 						return loss
 
@@ -86,7 +86,7 @@ def Trainautoencoder(Xtrain, Xtrain_mask, Xtest, Xtest_mask, parameters, doPredi
 			predictions = model.predict(session, Xtrain)
 			predictions = denormalizeData(predictions)
 			np.save("FullMatrixAuto.npy",predictions.T)
-			IOUtil.writeFile(predictions.T)
+			#IOUtil.writeFile(predictions.T)
 			print("Predictions made at the very end")
 			return loss
 					
