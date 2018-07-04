@@ -73,7 +73,7 @@ def pearsonSim(userItemMatrix):
         pearMatrix[i] = pearson_sim
 
     pearMatrix = np.reshape(pearMatrix, (n_movies, n_movies))
-    #np.save("similarityMatrix", pearMatrix)
+
     return pearMatrix
 
 
