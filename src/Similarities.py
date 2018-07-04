@@ -7,22 +7,13 @@ import datetime
 import time
 import IOUtils
 
-
-def prediction(ratings, similarity, type):
-    if type == 'user':
-        mean_user_rating = ratings.mean(axis=1)
-        # You use np.newaxis so that mean_user_rating has same format as ratings
-        ratings_diff = (ratings - mean_user_rating[:, np.newaxis])
-        pred = mean_user_rating[:, np.newaxis] + similarity.dot(ratings_diff) / np.array(
-            [np.abs(similarity).sum(axis=1)]).T
-    elif type == 'item':
-        mask = np.nonzero(ratings)
-
-        ratings = ratings[mask]
-        similarity = similarity[mask]
-        pred = ratings.dot(similarity) / np.array([np.abs(similarity).sum(axis=1)])
-    return pred
-
+# input:
+# 1) userItemMatrix: Is the matrix which has as rows the user and as columns the userRatings
+# 2) similarityMatrix: Is the matrix which has as rows and columns the users and as generic element the similarity between user i and user j
+# 3) user: which is an index to obtain all the ratings given the the user
+# 4) item : all the items necessary to compute the item_prediction
+#return:
+# 1) res: the computed prediction for the user
 
 def predict(userItemMatrix, similarityMatrix, user, item):
     simCoeff = similarityMatrix[item, :]
@@ -38,6 +29,11 @@ def predict(userItemMatrix, similarityMatrix, user, item):
     res = num / dem
     return res
 
+#input:
+# 1) userItemMatrix: Is the matrix which has as rows the user and as columns the userRatings
+# 2) similarityMatrix: Is the matrix which has as rows and columns the users and as generic element the similarity between user i and user j
+#return
+#1) userItemMatrix: it is the total matrix without missing values and filled with all the prediction
 
 def predictTot(userItemMatrix, similarityMatrix):
     row = userItemMatrix.shape[0]
@@ -54,13 +50,11 @@ def predictTot(userItemMatrix, similarityMatrix):
             userItemMatrix[i][j] = prediction
     return userItemMatrix
 
-
-def rmse(prediction, ground_truth):
-    prediction = prediction[ground_truth.nonzero()].flatten()
-    ground_truth = ground_truth[ground_truth.nonzero()].flatten()
-    return sqrt(mean_squared_error(prediction, ground_truth))
-
-
+#input:
+# 1) userItemMatrix: Is the matrix which has as rows the user and as columns the userRatings
+#return
+# 1) similarityMatrix: Is the matrix which has as rows and columns the users and as generic element the similarity between user i and user j
+#                      the similarity used is the pearson coefficient
 def pearsonSim(userItemMatrix):
     r = np.repeat(range(userItemMatrix.shape[1]), userItemMatrix.shape[1])
     t = np.tile(range(userItemMatrix.shape[1]), userItemMatrix.shape[1])
@@ -89,25 +83,12 @@ n_movies = 1000
 
 train_data, _ = IOUtils.initialization()
 
-#compute the similarity(cosine)
-#user_similarity = pairwise_distances(train_data, metric='cosine')
-#item_similarity = pairwise_distances(train_data.T, metric='cosine')
-#compute the similarity(pearson)
 pearSim = pearsonSim(train_data)
 
-#2) compute the prediction (cosine)
-#user_prediction = prediction(train_data, user_similarity, 'user')
-#item_prediction = predictTot(train_data, item_similarity)
-#2) compute the prediction (pearson)
+
 item_pear_prediction = predictTot(train_data, pearSim )
 
 
 item_pear_prediction = np.clip(item_pear_prediction, 1, 5)
 now = datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
 np.save("item-itemPearson" + now + "", item_pear_prediction)
-#writeFile(item_pear_prediction)
-
-#item_prediction = np.clip(item_prediction, 1, 5)
-#now = datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
-#np.save("item-itemDot" + now + "", item_prediction)
-#writeFile(item_prediction)
